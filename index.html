@@ -368,13 +368,14 @@ async function genOne(userP){
   var prompt = buildP(userP);
   var ar = RATIOS[activeR]?RATIOS[activeR].ar:'1:1';
 
-  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key='+apiKey;
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key='+apiKey;
 
   var body = {
     contents:[{parts:[{text:prompt}]}],
     generationConfig:{
-      responseModalities:['IMAGE'],
-      imageConfig:{ aspectRatio: ar }
+      responseModalities:['TEXT','IMAGE'],
+      imageConfig:{ aspectRatio: ar },
+      thinkingConfig:{ thinkingLevel:'minimal' }
     }
   };
 
@@ -398,6 +399,8 @@ async function genOne(userP){
   var data = await resp.json();
   var parts = (data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)||[];
   for(var i=0;i<parts.length;i++){
+    // Saltar partes de "pensamiento" del modelo
+    if(parts[i].thought) continue;
     if(parts[i].inlineData&&parts[i].inlineData.data){
       return 'data:'+(parts[i].inlineData.mimeType||'image/jpeg')+';base64,'+parts[i].inlineData.data;
     }
