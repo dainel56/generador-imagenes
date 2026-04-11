@@ -215,8 +215,8 @@ input[type=range]{width:100%;accent-color:var(--a);margin-bottom:3px}
       <input type="text" id="custPfx" placeholder="ej: cinematic lighting, 8k..." style="margin-bottom:12px">
       <span class="lbl">Concurrencia — simultáneas: <span id="cLbl">3</span></span>
       <input type="range" id="concR" min="1" max="8" value="3" step="1" oninput="document.getElementById('cLbl').textContent=this.value">
-      <div style="font-size:9px;color:#22222f;margin-top:3px;line-height:1.6">
-        Tier 1: 15 imágenes/min · 1500/día · Sube la concurrencia para mayor velocidad
+      <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.6">
+        ComfyUI local · GPU RTX 3050 · Recomendado: 1-2 simultáneas con 4GB VRAM
       </div>
     </div>
   </div>
@@ -225,11 +225,11 @@ input[type=range]{width:100%;accent-color:var(--a);margin-bottom:3px}
   <div class="rbar">
     <span class="rlbl">▸ Ratio</span>
     <div class="rpls">
-      <div class="rp on" data-r="1:1"  onclick="setR(this)"><div class="rt" style="width:13px;height:13px"></div>1:1</div>
-      <div class="rp"    data-r="16:9" onclick="setR(this)"><div class="rt" style="width:20px;height:11px"></div>16:9</div>
-      <div class="rp"    data-r="9:16" onclick="setR(this)"><div class="rt" style="width:11px;height:20px"></div>9:16</div>
-      <div class="rp"    data-r="4:3"  onclick="setR(this)"><div class="rt" style="width:18px;height:13px"></div>4:3</div>
-      <div class="rp"    data-r="3:4"  onclick="setR(this)"><div class="rt" style="width:13px;height:18px"></div>3:4</div>
+      <div class="rp on" data-r="1:1"  data-w="1024" data-h="1024" onclick="setR(this)"><div class="rt" style="width:13px;height:13px"></div>1:1</div>
+      <div class="rp"    data-r="16:9" data-w="1344" data-h="768"  onclick="setR(this)"><div class="rt" style="width:20px;height:11px"></div>16:9</div>
+      <div class="rp"    data-r="9:16" data-w="768"  data-h="1344" onclick="setR(this)"><div class="rt" style="width:11px;height:20px"></div>9:16</div>
+      <div class="rp"    data-r="4:3"  data-w="1152" data-h="864"  onclick="setR(this)"><div class="rt" style="width:18px;height:13px"></div>4:3</div>
+      <div class="rp"    data-r="3:4"  data-w="864"  data-h="1152" onclick="setR(this)"><div class="rt" style="width:13px;height:18px"></div>3:4</div>
     </div>
     <div class="rinfo"><b id="rLbl">1:1 — Cuadrado</b><span id="rDs">Feed de Instagram y Facebook</span></div>
   </div>
