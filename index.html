@@ -164,18 +164,15 @@ input[type=range]{width:100%;accent-color:var(--a);margin-bottom:3px}
 
   <!-- TOKEN HF -->
   <div class="apibox">
-    <div class="api-title">🤗 Token de <span>Hugging Face</span> — Gratis · Sin tarjeta · Sin cargos</div>
+    <div class="api-title">🖥️ ComfyUI Local — <span>GPU RTX 3050 · $0 por imagen · Ilimitado</span></div>
     <div class="api-sub">
-      1. Crea cuenta en <a href="https://huggingface.co/join" target="_blank">huggingface.co/join</a><br>
-      2. Ve a <a href="https://huggingface.co/settings/tokens" target="_blank">huggingface.co/settings/tokens</a> → New token → tipo <strong style="color:#ddddf0">Read</strong> → copia<br>
-      3. Pégalo aquí — o usa la clave anónima para empezar ya (menor prioridad en cola)
+      El generador usa tu GPU local a través de ComfyUI. Asegúrate de que ComfyUI esté corriendo antes de generar.<br>
+      Para iniciar: abre CMD → <strong style="color:var(--text)">cd C:\ComfyUI</strong> → <strong style="color:var(--text)">venv\Scripts\python.exe main.py --listen --lowvram --enable-cors-header</strong>
     </div>
     <div class="api-row">
-      <input class="api-in" type="password" id="apiKey" placeholder="hf_xxxxxxxxxxxxxxxxxxxx — opcional" autocomplete="off">
-      <button class="api-btn" onclick="saveKey()">✓ Guardar</button>
-      <button class="api-anon" onclick="useAnon()">⚡ Anónima</button>
+      <button class="api-btn" onclick="checkComfy()">⟳ Verificar conexión</button>
     </div>
-    <div class="api-st"><div class="dot ok" id="sDot"></div><span id="sMsg">Listo — usando clave anónima. Agrega tu token para mayor velocidad.</span></div>
+    <div class="api-st"><div class="dot ok" id="sDot"></div><span id="sMsg">Haz clic en "Verificar conexión" para confirmar que ComfyUI está activo</span></div>
   </div>
 
   <!-- 01 CANAL -->
@@ -297,7 +294,6 @@ var RATIOS = {
 };
 
 // ── ESTADO ───────────────────────────────────────────────────────────
-var hfToken = '0000000000'; // clave anónima por defecto
 var activeCh = null, activeR = '1:1', aTab = 'm';
 var b64s = [], stopped = false, timers = {};
 
@@ -310,27 +306,27 @@ var b64s = [], stopped = false, timers = {};
       +'<div class="ch-nm"><span class="ch-dot"></span>'+c.name+'</div>'
       +'<div class="ch-ds">'+c.desc+'</div></div>';
   }).join('');
-  var saved = localStorage.getItem('hf_tok_ds');
-  if(saved){ hfToken = saved; document.getElementById('apiKey').value = saved; setSt('ok','Token guardado ✓ — prioridad alta en cola'); }
   document.getElementById('manP').addEventListener('input', updCnt);
   pickCh('bonny');
+  // Verificar ComfyUI al cargar
+  setTimeout(checkComfy, 500);
 })();
 
-// ── TOKEN ─────────────────────────────────────────────────────────────
-function saveKey(){
-  var k = document.getElementById('apiKey').value.trim();
-  if(!k){ useAnon(); return; }
-  if(!k.startsWith('hf_')){ setSt('err','Token inválido — debe empezar con hf_'); return; }
-  hfToken = k;
-  localStorage.setItem('hf_tok_ds', k);
-  setSt('ok','Token guardado ✓ — prioridad alta en cola');
+// ── COMFYUI CONNECTION ────────────────────────────────────────────────
+function checkComfy(){
+  setSt('wait', 'Verificando conexión con ComfyUI...');
+  fetch(COMFY_URL + '/system_stats')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var gpu = d.devices && d.devices[0] ? d.devices[0].name : 'GPU';
+      setSt('ok', '✓ ComfyUI activo — ' + gpu + ' · Listo para generar');
+    })
+    .catch(function(){
+      setSt('err', '✗ ComfyUI no está corriendo — inicia ComfyUI primero');
+    });
 }
-function useAnon(){
-  hfToken = '0000000000';
-  localStorage.removeItem('hf_tok_ds');
-  document.getElementById('apiKey').value = '';
-  setSt('ok','Clave anónima activa — puedes generar imágenes ahora');
-}
+function saveKey(){ checkComfy(); }
+function useAnon(){ checkComfy(); }
 function setSt(t,m){
   document.getElementById('sDot').className='dot '+(t||'');
   document.getElementById('sMsg').textContent=m;
@@ -394,47 +390,61 @@ function buildP(p){
   return [cust,style,p].filter(Boolean).join(' ');
 }
 
-// ── GENERAR UNA IMAGEN — Hugging Face FLUX (100% gratis) ─────────────
+// ── GENERAR UNA IMAGEN — ComfyUI Local (100% gratis, GPU propia) ─────
+var COMFY_URL = 'http://127.0.0.1:8188';
+
 async function genOne(userP){
   var prompt = buildP(userP);
   var dim = getDim();
 
-  var controller = new AbortController();
-  var timer = setTimeout(function(){ controller.abort(); }, 60000);
+  // 1 — Enviar el workflow a la cola de ComfyUI
+  var workflow = buildWorkflow(prompt, dim.w, dim.h);
+  var queueResp = await fetch(COMFY_URL + '/prompt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: workflow, client_id: 'dainel-studios' })
+  });
+  if(!queueResp.ok) throw new Error('Error al enviar a ComfyUI: ' + queueResp.status);
+  var queueData = await queueResp.json();
+  var promptId = queueData.prompt_id;
 
-  var resp;
-  try {
-    resp = await fetch('https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + hfToken,
-        'Content-Type': 'application/json',
-        'x-wait-for-model': 'true'
-      },
-      body: JSON.stringify({ inputs: prompt, parameters: { width: dim.w, height: dim.h } }),
-      signal: controller.signal
-    });
-  } catch(e) {
-    clearTimeout(timer);
-    if(e.name === 'AbortError') throw new Error('Timeout — modelo tardó demasiado, intenta de nuevo');
-    throw new Error('Error de red: ' + e.message);
+  // 2 — Esperar que termine (polling cada 2 segundos)
+  var maxWait = 120; // 2 minutos máximo
+  for(var i=0; i<maxWait; i++){
+    await sleep(2000);
+    var histResp = await fetch(COMFY_URL + '/history/' + promptId);
+    if(!histResp.ok) continue;
+    var hist = await histResp.json();
+    if(hist[promptId] && hist[promptId].outputs){
+      var outputs = hist[promptId].outputs;
+      // Buscar la imagen en los outputs
+      for(var nodeId in outputs){
+        var nodeOut = outputs[nodeId];
+        if(nodeOut.images && nodeOut.images.length > 0){
+          var img = nodeOut.images[0];
+          // 3 — Descargar la imagen generada
+          var imgResp = await fetch(COMFY_URL + '/view?filename=' + encodeURIComponent(img.filename) + '&subfolder=' + encodeURIComponent(img.subfolder||'') + '&type=' + (img.type||'output'));
+          if(!imgResp.ok) throw new Error('Error al descargar imagen');
+          var blob = await imgResp.blob();
+          return await blobToB64(blob);
+        }
+      }
+    }
   }
-  clearTimeout(timer);
+  throw new Error('Timeout — ComfyUI tardó más de 2 minutos');
+}
 
-  // Modelo cargando — reintentar automáticamente
-  if(resp.status === 503){
-    var j = await resp.json().catch(function(){return{};});
-    await sleep(Math.min((j.estimated_time||20), 30) * 1000);
-    return await genOne(userP);
-  }
-
-  if(!resp.ok){
-    var err = await resp.json().catch(function(){return{};});
-    throw new Error(err.error || err.message || 'Error ' + resp.status);
-  }
-
-  var blob = await resp.blob();
-  return await blobToB64(blob);
+function buildWorkflow(prompt, width, height){
+  var seed = Math.floor(Math.random() * 999999999);
+  return {
+    "1": { "class_type": "CheckpointLoaderSimple", "inputs": { "ckpt_name": "sd_xl_base_1.0.safetensors" } },
+    "2": { "class_type": "CLIPTextEncode", "inputs": { "text": prompt, "clip": ["1", 1] } },
+    "3": { "class_type": "CLIPTextEncode", "inputs": { "text": "ugly, deformed, noisy, blurry, low quality, child, chibi, 3d render, photorealistic, watermark", "clip": ["1", 1] } },
+    "4": { "class_type": "EmptyLatentImage", "inputs": { "width": width, "height": height, "batch_size": 1 } },
+    "5": { "class_type": "KSampler", "inputs": { "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["4", 0], "seed": seed, "steps": 20, "cfg": 7, "sampler_name": "euler", "scheduler": "normal", "denoise": 1 } },
+    "6": { "class_type": "VAEDecode", "inputs": { "samples": ["5", 0], "vae": ["1", 2] } },
+    "7": { "class_type": "SaveImage", "inputs": { "images": ["6", 0], "filename_prefix": "bonny_" } }
+  };
 }
 
 function blobToB64(blob){
