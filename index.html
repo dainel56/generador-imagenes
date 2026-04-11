@@ -240,9 +240,10 @@ input[type=range]{width:100%;accent-color:var(--a);margin-bottom:3px}
     <button class="btn btn-stop" id="btnStop" onclick="doStop()" style="display:none">✕ Detener</button>
     <div class="prw" id="prW" style="display:none">
       <div class="prb"><div class="prf" id="prf"></div></div>
-      <div class="prt">Listas <span id="pCur">0</span> de <span id="pTot">0</span> · <span id="pPct">0%</span></div>
+      <div class="prt">Listas <span id="pCur">0</span> de <span id="pTot">0</span> · <span id="pPct">0%</span> · ⏱ <span id="pTimer">0:00</span></div>
     </div>
     <div class="spc"></div>
+    <div id="timerFinal" style="display:none;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--green);background:#dcfce7;border:1px solid #bbf7d0;border-radius:7px;padding:7px 14px">⏱ Tiempo total: <span id="timerFinalVal">—</span></div>
     <button class="btn" id="btnZip" onclick="dlZip()" style="display:none">⬇ ZIP</button>
     <button class="btn" onclick="clearAll()">⌫ Limpiar</button>
   </div>
@@ -487,6 +488,32 @@ function getDim(){
   return { w: parseInt(el&&el.dataset.w||1024), h: parseInt(el&&el.dataset.h||1024) };
 }
 
+// ── TIMER ────────────────────────────────────────────────────────────
+var timerInterval = null;
+var timerStart = 0;
+
+function startTimer(){
+  timerStart = Date.now();
+  document.getElementById('timerFinal').style.display = 'none';
+  timerInterval = setInterval(function(){
+    var elapsed = Math.floor((Date.now() - timerStart) / 1000);
+    var m = Math.floor(elapsed / 60);
+    var s = elapsed % 60;
+    document.getElementById('pTimer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+  }, 1000);
+}
+
+function stopTimer(){
+  clearInterval(timerInterval);
+  var elapsed = Math.floor((Date.now() - timerStart) / 1000);
+  var m = Math.floor(elapsed / 60);
+  var s = elapsed % 60;
+  var txt = m > 0 ? m + ' min ' + s + ' seg' : s + ' segundos';
+  document.getElementById('timerFinalVal').textContent = txt;
+  document.getElementById('timerFinal').style.display = 'inline-flex';
+  document.getElementById('pTimer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+}
+
 // ── RUN ──────────────────────────────────────────────────────────────
 async function run(){
   if(!activeCh){ alert('Selecciona un canal'); return; }
@@ -498,6 +525,7 @@ async function run(){
   document.getElementById('btnStop').style.display='inline-flex';
   document.getElementById('prW').style.display='block';
   document.getElementById('btnZip').style.display='none';
+  startTimer();
 
   var conc=parseInt(document.getElementById('concR').value);
   var done=0;
@@ -517,6 +545,7 @@ async function run(){
     if(!stopped && i+conc<prompts.length) await sleep(1500);
   }
 
+  stopTimer();
   stopped=true;
   document.getElementById('btnGo').disabled=false;
   document.getElementById('btnStop').style.display='none';
