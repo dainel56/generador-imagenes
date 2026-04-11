@@ -363,13 +363,10 @@ function buildP(p){
 }
 
 // ── GENERAR UNA IMAGEN ────────────────────────────────────────────────
-// Gemini devuelve base64 en el JSON → sin CORS, funciona desde cualquier origen
 async function genOne(userP){
   var prompt = buildP(userP);
   var ar = RATIOS[activeR]?RATIOS[activeR].ar:'1:1';
-
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key='+apiKey;
-
   var body = {
     contents:[{parts:[{text:prompt}]}],
     generationConfig:{
@@ -379,33 +376,55 @@ async function genOne(userP){
     }
   };
 
-  var resp = await fetch(url,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(body)
-  });
+  // Timeout de 45 segundos
+  var controller = new AbortController();
+  var timer = setTimeout(function(){ controller.abort(); }, 45000);
+
+  var resp;
+  try {
+    resp = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body),
+      signal: controller.signal
+    });
+  } catch(e) {
+    clearTimeout(timer);
+    if(e.name === 'AbortError') throw new Error('Timeout (45s) — el modelo tardó demasiado');
+    throw new Error('Error de red: ' + e.message);
+  }
+  clearTimeout(timer);
 
   if(!resp.ok){
     var err = await resp.json().catch(function(){return{};});
-    var msg = (err.error&&err.error.message)||('Error '+resp.status);
-    // Rate limit → esperar 10s y reintentar una vez
-    if(resp.status===429){
-      await sleep(10000);
-      return await genOne(userP);
-    }
+    var msg = (err.error&&err.error.message)||('Error HTTP '+resp.status);
+    if(resp.status===429) throw new Error('Límite de tasa — espera 60s');
+    if(resp.status===403) throw new Error('API key sin permisos — verifica Tier 1');
     throw new Error(msg);
   }
 
   var data = await resp.json();
-  var parts = (data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)||[];
+
+  // Log para diagnóstico (visible en consola del navegador F12)
+  console.log('Respuesta Gemini:', JSON.stringify(data).substring(0, 300));
+
+  var candidates = data.candidates;
+  if(!candidates || !candidates.length){
+    var blocked = data.promptFeedback;
+    throw new Error('Sin respuesta' + (blocked ? ' — prompt bloqueado por seguridad' : ' — respuesta vacía'));
+  }
+
+  var parts = (candidates[0].content && candidates[0].content.parts) || [];
   for(var i=0;i<parts.length;i++){
-    // Saltar partes de "pensamiento" del modelo
     if(parts[i].thought) continue;
-    if(parts[i].inlineData&&parts[i].inlineData.data){
+    if(parts[i].inlineData && parts[i].inlineData.data){
       return 'data:'+(parts[i].inlineData.mimeType||'image/jpeg')+';base64,'+parts[i].inlineData.data;
     }
   }
-  throw new Error('Sin imagen en la respuesta — prompt rechazado por filtro de seguridad');
+  // Si llegó aquí, mostrar qué devolvió el modelo
+  var textParts = parts.filter(function(p){ return p.text && !p.thought; });
+  var modelText = textParts.map(function(p){ return p.text; }).join(' ');
+  throw new Error('Sin imagen en respuesta' + (modelText ? ': ' + modelText.substring(0,100) : ' — partes: '+parts.length));
 }
 
 // ── RUN ──────────────────────────────────────────────────────────────
