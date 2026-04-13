@@ -3,274 +3,573 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Generador Universal · Dainel Studios</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Generador de Imágenes · Dainel Studios</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
+/* ── RESET & ROOT ─────────────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --a:       #4f46e5;
-  --a-light: #eef2ff;
-  --a-mid:   #c7d2fe;
-  --bg:      #f8f9fc;
-  --surface: #ffffff;
-  --border:  #e5e7eb;
-  --border2: #d1d5db;
-  --text:    #111827;
-  --muted:   #6b7280;
-  --muted2:  #9ca3af;
-  --green:   #16a34a;
-  --red:     #dc2626;
-  --radius:  10px;
+  --bg:       #08080e;
+  --bg2:      #0f0f1a;
+  --bg3:      #16162a;
+  --border:   rgba(255,255,255,.07);
+  --border2:  rgba(255,255,255,.12);
+  --text:     #e8e6f0;
+  --muted:    #6b6880;
+  --muted2:   #9896a8;
+
+  /* GEMINI MODE */
+  --gem:      #f4a300;
+  --gem2:     #ffbe3d;
+  --gem-bg:   rgba(244,163,0,.06);
+  --gem-border: rgba(244,163,0,.25);
+
+  /* COMFY MODE */
+  --cfy:      #00d4aa;
+  --cfy2:     #00f0c0;
+  --cfy-bg:   rgba(0,212,170,.06);
+  --cfy-border: rgba(0,212,170,.25);
+
+  --active-accent: var(--cfy);
+  --active-bg:     var(--cfy-bg);
+  --active-border: var(--cfy-border);
+
+  --green: #22c55e;
+  --red:   #ef4444;
+  --radius: 12px;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;min-height:100vh}
-.wrap{max-width:1160px;margin:0 auto;padding:28px 20px 80px}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Bricolage Grotesque',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(0,212,170,.04) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 100%, rgba(244,163,0,.03) 0%, transparent 55%);
+  pointer-events:none;z-index:0;
+}
 
-/* HEADER */
-.logo{font-family:'Syne',sans-serif;font-size:10px;letter-spacing:3px;color:var(--muted2);text-transform:uppercase;margin-bottom:8px}
-h1{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:3px;color:var(--text)}
-h1 em{color:var(--a);font-style:normal}
-.sub{font-size:11px;color:var(--muted);letter-spacing:.5px;margin-bottom:20px}
+/* ── LAYOUT ──────────────────────────────────────────────────────── */
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:32px 24px 80px}
 
-/* API BOX */
-.apibox{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.api-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px}
-.api-title span{color:var(--a)}
-.api-sub{font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.7}
-.api-sub a{color:var(--a);text-decoration:none}
-.api-sub a:hover{text-decoration:underline}
-.api-row{display:flex;gap:8px}
-.api-in{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 12px;outline:none;transition:border-color .18s}
-.api-in:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
-.api-in::placeholder{color:var(--muted2)}
-.api-btn{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;padding:9px 18px;border-radius:7px;border:none;cursor:pointer;background:var(--a);color:#fff;transition:all .14s}
-.api-btn:hover{background:#4338ca}
-.api-anon{font-family:'Syne',sans-serif;font-weight:600;font-size:11px;padding:9px 14px;border-radius:7px;border:1px solid var(--border2);cursor:pointer;background:var(--surface);color:var(--muted);white-space:nowrap;transition:all .14s}
-.api-anon:hover{border-color:var(--a);color:var(--a);background:var(--a-light)}
-.api-st{margin-top:9px;font-size:11px;display:flex;align-items:center;gap:6px;color:var(--muted)}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);flex-shrink:0;transition:background .3s}
+/* ── HEADER ──────────────────────────────────────────────────────── */
+.hdr{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:36px;flex-wrap:wrap;gap:12px}
+.hdr-left{}
+.studio-tag{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.hdr h1{font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1}
+.hdr h1 span{background:linear-gradient(135deg,var(--cfy),var(--gem));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr-right{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-align:right;line-height:1.8}
+
+/* ── MODE SELECTOR ───────────────────────────────────────────────── */
+.mode-section{margin-bottom:28px}
+.mode-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.mode-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.mode-card{
+  position:relative;overflow:hidden;
+  border:2px solid var(--border2);
+  border-radius:var(--radius);
+  padding:20px 22px;
+  cursor:pointer;
+  transition:all .2s;
+  background:var(--bg2);
+}
+.mode-card::before{
+  content:'';position:absolute;inset:0;
+  opacity:0;transition:opacity .2s;
+}
+.mode-card.gem-card::before{background:var(--gem-bg)}
+.mode-card.cfy-card::before{background:var(--cfy-bg)}
+.mode-card:hover{transform:translateY(-2px)}
+.mode-card.gem-card:hover{border-color:var(--gem-border)}
+.mode-card.cfy-card:hover{border-color:var(--cfy-border)}
+.mode-card.active.gem-card{border-color:var(--gem);box-shadow:0 0 0 1px var(--gem),0 8px 32px rgba(244,163,0,.15)}
+.mode-card.active.cfy-card{border-color:var(--cfy);box-shadow:0 0 0 1px var(--cfy),0 8px 32px rgba(0,212,170,.15)}
+.mode-card.active::before{opacity:1}
+
+.mc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;position:relative}
+.mc-icon{font-size:28px;line-height:1}
+.mc-badge{
+  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;
+  padding:3px 8px;border-radius:20px;letter-spacing:1px;text-transform:uppercase;
+}
+.gem-card .mc-badge{background:rgba(244,163,0,.15);color:var(--gem);border:1px solid rgba(244,163,0,.3)}
+.cfy-card .mc-badge{background:rgba(0,212,170,.15);color:var(--cfy);border:1px solid rgba(0,212,170,.3)}
+
+.mc-name{font-size:18px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px;position:relative}
+.gem-card .mc-name{color:var(--gem)}
+.cfy-card .mc-name{color:var(--cfy)}
+.mc-desc{font-size:12px;color:var(--muted2);line-height:1.5;position:relative}
+
+.mc-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:16px;padding-top:14px;
+  border-top:1px solid var(--border);
+  position:relative;
+}
+.mc-stats{display:flex;gap:16px}
+.mc-stat{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted2)}
+.mc-stat b{display:block;font-size:13px;font-weight:600}
+.gem-card .mc-stat b{color:var(--gem)}
+.cfy-card .mc-stat b{color:var(--cfy)}
+.mc-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);position:relative;transition:all .2s;flex-shrink:0}
+.mode-card.active.gem-card .mc-radio{border-color:var(--gem);background:var(--gem)}
+.mode-card.active.cfy-card .mc-radio{border-color:var(--cfy);background:var(--cfy)}
+.mc-radio::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:var(--bg);opacity:0;transition:opacity .2s}
+.mode-card.active .mc-radio::after{opacity:1}
+
+/* ── MODE CONFIG PANELS ──────────────────────────────────────────── */
+.config-panel{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px 22px;
+  margin-bottom:28px;display:none;
+}
+.config-panel.visible{display:block}
+.config-panel.gem-panel{border-color:var(--gem-border);background:color-mix(in srgb,var(--gem-bg),var(--bg2))}
+.config-panel.cfy-panel{border-color:var(--cfy-border);background:color-mix(in srgb,var(--cfy-bg),var(--bg2))}
+
+.cp-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.gem-panel .cp-title{color:var(--gem)}
+.cfy-panel .cp-title{color:var(--cfy)}
+
+.cp-row{display:flex;gap:8px}
+.cp-input{
+  flex:1;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:8px;color:var(--text);
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  padding:10px 14px;outline:none;transition:all .18s;
+}
+.cp-input::placeholder{color:var(--muted)}
+.gem-panel .cp-input:focus{border-color:var(--gem);box-shadow:0 0 0 3px rgba(244,163,0,.1)}
+.cfy-panel .cp-input:focus{border-color:var(--cfy);box-shadow:0 0 0 3px rgba(0,212,170,.1)}
+.cp-btn{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:12px;
+  padding:10px 18px;border-radius:8px;border:none;cursor:pointer;
+  white-space:nowrap;transition:all .15s;
+}
+.gem-panel .cp-btn{background:var(--gem);color:#0a0a0f}
+.gem-panel .cp-btn:hover{background:var(--gem2)}
+.cfy-panel .cp-btn{background:var(--cfy);color:#0a0a0f}
+.cfy-panel .cp-btn:hover{background:var(--cfy2)}
+
+.cp-status{margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;display:flex;align-items:center;gap:7px;color:var(--muted2)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
 .dot.ok{background:var(--green)}
 .dot.err{background:var(--red)}
-.dot.wait{background:var(--a);animation:blink .7s infinite alternate}
-@keyframes blink{to{opacity:.3}}
+.dot.pulse{background:var(--gem);animation:pulse .7s infinite alternate}
+@keyframes pulse{to{opacity:.3}}
+.dot.spin{background:var(--cfy);animation:pulse .7s infinite alternate}
 
-/* SECTION LABELS */
-.sec{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted2);margin:24px 0 12px;display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif}
+.cp-info{margin-top:10px;font-size:11px;color:var(--muted2);line-height:1.6;background:rgba(255,255,255,.03);border-radius:6px;padding:10px 12px;font-family:'JetBrains Mono',monospace}
+.cp-info code{color:var(--text);font-size:10px}
+
+/* ── SECTION LABEL ───────────────────────────────────────────────── */
+.sec{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin:24px 0 12px;display:flex;align-items:center;gap:10px}
 .sec::after{content:'';flex:1;height:1px;background:var(--border)}
 
-/* CHANNELS */
-.chs{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px}
-.ch{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:13px;cursor:pointer;position:relative;overflow:hidden;transition:all .18s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.ch::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,#ccc);opacity:.4;transition:opacity .18s}
-.ch:hover{border-color:var(--c,#ccc);box-shadow:0 4px 12px rgba(0,0,0,.08);transform:translateY(-1px)}
+/* ── CHANNELS ────────────────────────────────────────────────────── */
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.ch{
+  background:var(--bg2);border:2px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:all .18s;
+}
+.ch::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,#555);opacity:.3;transition:opacity .2s}
+.ch:hover{border-color:color-mix(in srgb,var(--c) 60%,transparent);transform:translateY(-1px)}
 .ch:hover::after,.ch.on::after{opacity:1}
-.ch.on{border-color:var(--c,#ccc);background:color-mix(in srgb,var(--c) 6%,#fff);box-shadow:0 4px 12px rgba(0,0,0,.1)}
-.ch-nm{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;margin-bottom:3px;color:var(--text)}
-.ch-dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex-shrink:0}
-.ch-ds{font-size:10px;color:var(--muted)}
-.ch-tag{position:absolute;top:8px;right:8px;font-size:8px;color:var(--c);border:1px solid currentColor;padding:1px 6px;border-radius:4px;opacity:.7;font-family:'Syne',sans-serif;font-weight:700}
+.ch.on{border-color:var(--c,#555);background:color-mix(in srgb,var(--c) 8%,var(--bg2));box-shadow:0 4px 20px color-mix(in srgb,var(--c) 20%,transparent)}
+.ch-dot{width:9px;height:9px;border-radius:50%;background:var(--c);margin-bottom:8px;box-shadow:0 0 8px var(--c)}
+.ch-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.ch-desc{font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace}
+.ch-tag{position:absolute;top:10px;right:10px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;color:var(--c);border:1px solid currentColor;padding:2px 6px;border-radius:4px;opacity:.7}
 
-/* PANELS */
+/* ── STYLE PREFIX PREVIEW ────────────────────────────────────────── */
+.pfx-box{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;padding:12px 14px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:var(--muted2);line-height:1.6;margin-bottom:14px;
+  min-height:52px;
+}
+.pfx-box b{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:4px;color:var(--active-accent)}
+
+/* ── PANELS GRID ─────────────────────────────────────────────────── */
 .panels{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 @media(max-width:640px){.panels{grid-template-columns:1fr}}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.ptit{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;margin-bottom:12px;color:var(--text);letter-spacing:.3px}
-.lbl{font-size:10px;color:var(--muted);display:block;margin-bottom:4px;letter-spacing:.5px;text-transform:uppercase;font-family:'Syne',sans-serif}
-textarea,select,input[type=text]{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px 11px;resize:vertical;outline:none;transition:all .18s}
-textarea:focus,select:focus,input:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(79,70,229,.1);background:#fff}
-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
-.pfx{background:var(--a-light);border:1px solid var(--a-mid);border-radius:7px;padding:9px 11px;font-size:10px;color:#4338ca;line-height:1.55;margin-bottom:12px;min-height:40px}
-.pfx b{color:var(--a);font-size:9px;letter-spacing:1px;display:block;margin-bottom:3px;font-family:'Syne',sans-serif}
-.cnt{font-size:10px;color:var(--muted);margin-top:5px;display:flex;justify-content:space-between}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.panel-title{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted2);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.panel-title::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--active-accent);flex-shrink:0}
 
 /* TABS */
-.tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:3px;width:fit-content;margin-bottom:12px}
-.tab{font-family:'Syne',sans-serif;font-size:10px;font-weight:600;padding:5px 12px;border-radius:5px;cursor:pointer;color:var(--muted);background:transparent;border:none;transition:all .14s}
-.tab.on{background:var(--surface);color:var(--a);box-shadow:0 1px 3px rgba(0,0,0,.1);font-weight:700}
+.tabs{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:3px;width:fit-content;margin-bottom:12px}
+.tab{font-family:'Bricolage Grotesque',sans-serif;font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;cursor:pointer;color:var(--muted);background:transparent;border:none;transition:all .14s}
+.tab.on{background:var(--bg2);color:var(--active-accent);box-shadow:0 1px 4px rgba(0,0,0,.3)}
 
-/* RATIO */
-.rbar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.rlbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);white-space:nowrap;font-family:'Syne',sans-serif}
+label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+textarea,input[type=text]{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:7px;color:var(--text);
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  padding:9px 12px;outline:none;resize:vertical;transition:all .18s;
+}
+textarea:focus,input[type=text]:focus{border-color:var(--active-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--active-accent) 15%,transparent)}
+textarea::placeholder,input::placeholder{color:var(--muted)}
+.cnt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between}
+
+/* ── RATIO ───────────────────────────────────────────────────────── */
+.rbar{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 18px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.rlbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .rpls{display:flex;gap:6px;flex-wrap:wrap}
-.rp{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);cursor:pointer;font-family:'Syne',sans-serif;font-size:10px;font-weight:600;color:var(--muted);background:var(--surface);transition:all .14s}
-.rp:hover{border-color:var(--a);color:var(--a);background:var(--a-light)}
-.rp.on{border-color:var(--a);color:var(--a);background:var(--a-light);font-weight:700}
+.rp{
+  display:flex;align-items:center;gap:6px;padding:6px 12px;
+  border-radius:7px;border:1px solid var(--border2);cursor:pointer;
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;
+  color:var(--muted2);background:var(--bg3);transition:all .14s;
+}
+.rp:hover{border-color:var(--active-accent);color:var(--active-accent)}
+.rp.on{border-color:var(--active-accent);color:var(--active-accent);background:color-mix(in srgb,var(--active-accent) 10%,transparent)}
 .rt{border:1.5px solid currentColor;border-radius:2px;flex-shrink:0}
-.rinfo{font-size:10px;color:var(--muted);flex:1}
-.rinfo b{color:var(--text);display:block;font-size:11px;margin-bottom:1px;font-family:'Syne',sans-serif;font-weight:600}
+.rinfo{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);flex:1}
+.rinfo b{color:var(--text);display:block;font-size:12px;font-weight:700;margin-bottom:1px}
 
-/* CONTROLS */
-.ctrl{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.btn{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;padding:9px 18px;border-radius:7px;border:1px solid var(--border2);cursor:pointer;background:var(--surface);color:var(--muted);transition:all .14s;white-space:nowrap}
-.btn:hover:not(:disabled){border-color:var(--a);color:var(--a);background:var(--a-light)}
-.btn:disabled{opacity:.35;cursor:not-allowed}
-.btn-go{background:var(--a);color:#fff;border-color:var(--a);box-shadow:0 2px 8px rgba(79,70,229,.3)}
-.btn-go:hover:not(:disabled){background:#4338ca;border-color:#4338ca;color:#fff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,.35)}
-.btn-stop{border-color:#fca5a5;color:var(--red);background:#fef2f2}
-.btn-stop:hover:not(:disabled){background:#fee2e2;border-color:var(--red);color:var(--red)}
+/* ── QUALITY (GEMINI ONLY) ───────────────────────────────────────── */
+.quality-bar{
+  background:var(--bg2);border:1px solid var(--gem-border);
+  border-radius:var(--radius);padding:14px 18px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  margin-bottom:14px;display:none;
+}
+.quality-bar.visible{display:flex}
+.qpls{display:flex;gap:6px;flex-wrap:wrap}
+.qp{
+  display:flex;align-items:center;gap:6px;padding:6px 14px;
+  border-radius:7px;border:1px solid var(--border2);cursor:pointer;
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;
+  color:var(--muted2);background:var(--bg3);transition:all .14s;
+}
+.qp:hover,.qp.on{border-color:var(--gem);color:var(--gem);background:rgba(244,163,0,.08)}
+
+/* ── CONTROLS ────────────────────────────────────────────────────── */
+.ctrl{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 18px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-bottom:24px;
+}
+.btn{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:13px;
+  padding:10px 20px;border-radius:8px;border:1px solid var(--border2);
+  cursor:pointer;background:var(--bg3);color:var(--muted2);
+  transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;
+}
+.btn:hover:not(:disabled){border-color:var(--active-accent);color:var(--active-accent);background:color-mix(in srgb,var(--active-accent) 8%,transparent)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn-go{
+  background:var(--active-accent);color:#08080e;border-color:var(--active-accent);
+  font-size:14px;padding:11px 24px;
+  box-shadow:0 4px 20px color-mix(in srgb,var(--active-accent) 30%,transparent);
+}
+.btn-go:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 6px 24px color-mix(in srgb,var(--active-accent) 40%,transparent)}
+.btn-stop{border-color:rgba(239,68,68,.4);color:var(--red);background:rgba(239,68,68,.06)}
+.btn-stop:hover:not(:disabled){background:rgba(239,68,68,.12);border-color:var(--red)}
 .spc{flex:1}
-.prw{flex:1;min-width:150px}
-.prb{background:#e5e7eb;border-radius:4px;height:5px;overflow:hidden;margin-bottom:4px}
-.prf{height:100%;background:var(--a);border-radius:4px;width:0%;transition:width .4s}
-.prt{font-size:10px;color:var(--muted)}
-.prt span{color:var(--a);font-weight:700}
-input[type=range]{width:100%;accent-color:var(--a);margin-bottom:3px}
 
-/* IMAGE GRID */
-.igr{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
-.ic{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;position:relative;animation:fi .3s ease;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.ic img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:zoom-in}
-.sk{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:#f8f9fc}
-.ring{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--a);border-radius:50%;animation:spin .8s linear infinite}
+/* PROGRESS */
+.prw{flex:1;min-width:180px}
+.prb{background:var(--bg3);border-radius:4px;height:4px;overflow:hidden;margin-bottom:5px;border:1px solid var(--border)}
+.prf{height:100%;background:var(--active-accent);border-radius:4px;width:0%;transition:width .4s;box-shadow:0 0 8px var(--active-accent)}
+.prt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted2)}
+.prt span{color:var(--active-accent);font-weight:600}
+
+input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px}
+
+/* ── RESULTS ─────────────────────────────────────────────────────── */
+.timer-final{
+  display:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+  color:var(--green);background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);
+  border-radius:7px;padding:8px 14px;
+}
+
+.igr{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.ic{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;position:relative;
+  animation:fadeIn .3s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ic img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:zoom-in;transition:transform .2s}
+.ic:hover img{transform:scale(1.02)}
+.sk{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:var(--bg3)}
+.ring{width:22px;height:22px;border:2px solid var(--border2);border-top-color:var(--active-accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.sk-s{font-size:10px;color:var(--muted)}
-.ic-n{position:absolute;top:7px;left:7px;background:rgba(255,255,255,.9);backdrop-filter:blur(4px);font-size:9px;padding:2px 6px;border-radius:4px;color:var(--muted);z-index:2;pointer-events:none;border:1px solid var(--border);font-family:'Syne',sans-serif;font-weight:600}
-.ic-st{position:absolute;top:7px;right:7px;font-size:9px;padding:2px 7px;border-radius:4px;z-index:2;pointer-events:none;font-family:'Syne',sans-serif;font-weight:600}
-.sq{background:rgba(255,255,255,.9);color:var(--muted);border:1px solid var(--border)}
-.ok{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
-.er{background:#fee2e2;color:var(--red);border:1px solid #fca5a5}
-.ic-p{padding:6px 9px;font-size:9px;color:var(--muted);line-height:1.45;border-top:1px solid var(--border);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ic-btns{display:flex;gap:4px;padding:6px 8px;border-top:1px solid var(--border);background:#fafafa}
-.ic-btns a,.ic-btns button{font-family:'Syne',sans-serif;font-size:10px;font-weight:600;padding:4px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;text-decoration:none;transition:all .12s;flex:1;text-align:center}
-.ic-btns a:hover,.ic-btns button:hover{border-color:var(--a);color:var(--a);background:var(--a-light)}
-.ic-btns a.dl{background:var(--a);color:#fff;border-color:var(--a)}
-.ic-btns a.dl:hover{background:#4338ca}
-.empty{text-align:center;padding:48px 20px;color:var(--muted2);font-size:12px;line-height:2.2;border:2px dashed var(--border);border-radius:var(--radius);background:var(--surface)}
+.sk-s{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.ic-n{
+  position:absolute;top:8px;left:8px;
+  background:rgba(8,8,14,.8);backdrop-filter:blur(4px);
+  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;
+  padding:2px 7px;border-radius:4px;color:var(--muted2);z-index:2;
+  border:1px solid var(--border);
+}
+.ic-st{
+  position:absolute;top:8px;right:8px;
+  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;
+  padding:2px 7px;border-radius:4px;z-index:2;
+}
+.sq{background:rgba(8,8,14,.8);color:var(--muted2);border:1px solid var(--border)}
+.ok{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.er{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.ic-p{padding:7px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);line-height:1.45;border-top:1px solid var(--border);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ic-btns{display:flex;gap:4px;padding:7px 8px;border-top:1px solid var(--border);background:rgba(0,0,0,.2)}
+.ic-btns a,.ic-btns button{
+  font-family:'Bricolage Grotesque',sans-serif;font-size:10px;font-weight:600;
+  padding:5px 8px;border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--muted2);cursor:pointer;text-decoration:none;
+  transition:all .12s;flex:1;text-align:center;
+}
+.ic-btns a:hover,.ic-btns button:hover{border-color:var(--active-accent);color:var(--active-accent)}
+.ic-btns a.dl{background:var(--active-accent);color:#08080e;border-color:var(--active-accent)}
+.ic-btns a.dl:hover{filter:brightness(1.1)}
 
-/* LIGHTBOX */
-#lb{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);z-index:999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:24px}
+.empty{
+  text-align:center;padding:56px 20px;color:var(--muted);
+  font-size:13px;line-height:2.4;
+  border:1.5px dashed var(--border2);border-radius:var(--radius);
+  background:var(--bg2);
+  font-family:'JetBrains Mono',monospace;
+}
+.empty strong{color:var(--active-accent)}
+
+/* ── LIGHTBOX ────────────────────────────────────────────────────── */
+#lb{
+  position:fixed;inset:0;background:rgba(0,0,0,.92);
+  backdrop-filter:blur(8px);z-index:999;
+  display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;padding:24px;
+}
 #lb.op{display:flex}
-#lbImg{max-width:90vw;max-height:76vh;border-radius:10px;object-fit:contain;box-shadow:0 24px 48px rgba(0,0,0,.4)}
-#lbX{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;color:#fff;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;transition:background .14s}
-#lbX:hover{background:rgba(255,255,255,.25)}
-#lbDl{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;padding:10px 24px;border-radius:7px;background:var(--a);color:#fff;text-decoration:none;box-shadow:0 2px 8px rgba(79,70,229,.4)}
+#lbImg{max-width:88vw;max-height:75vh;border-radius:10px;object-fit:contain;box-shadow:0 32px 64px rgba(0,0,0,.6)}
+#lbX{
+  position:absolute;top:18px;right:22px;font-size:20px;cursor:pointer;
+  color:var(--muted2);background:var(--bg3);border:1px solid var(--border);
+  border-radius:50%;width:38px;height:38px;display:flex;align-items:center;
+  justify-content:center;transition:all .15s;
+}
+#lbX:hover{color:var(--text);border-color:var(--border2)}
+#lbDl{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:13px;
+  padding:11px 26px;border-radius:8px;background:var(--active-accent);
+  color:#08080e;text-decoration:none;
+}
 
-/* SCROLLBAR */
-::-webkit-scrollbar{width:6px}
+/* ── SCROLLBAR ───────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--muted2)}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- HEADER -->
-  <div class="logo">▸ Dainel Studios — Producción IA</div>
-  <h1>Generador <em>Universal</em></h1>
-  <p class="sub">Hugging Face · FLUX.1 · 100% Gratis · Sin cargos · Sin tarjeta</p>
-
-  <!-- TOKEN HF -->
-  <div class="apibox">
-    <div class="api-title">🖥️ ComfyUI Local — <span>GPU RTX 3050 · $0 por imagen · Ilimitado</span></div>
-    <div class="api-sub">
-      El generador usa tu GPU local a través de ComfyUI. Asegúrate de que ComfyUI esté corriendo antes de generar.<br>
-      Para iniciar: abre CMD → <strong style="color:var(--text)">cd C:\ComfyUI</strong> → <strong style="color:var(--text)">venv\Scripts\python.exe main.py --listen --lowvram --enable-cors-header</strong>
-    </div>
-    <div class="api-row">
-      <button class="api-btn" onclick="checkComfy()">⟳ Verificar conexión</button>
-    </div>
-    <div class="api-st"><div class="dot ok" id="sDot"></div><span id="sMsg">Haz clic en "Verificar conexión" para confirmar que ComfyUI está activo</span></div>
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="studio-tag">▸ Dainel Studios — v2.0</div>
+    <h1>Generador de <span>Imágenes</span></h1>
   </div>
-
-  <!-- 01 CANAL -->
-  <div class="sec">01 — canal</div>
-  <div class="chs" id="chGrid"></div>
-
-  <!-- 02 CONFIG -->
-  <div class="sec">02 — configuración</div>
-  <div class="panels">
-
-    <!-- PROMPTS -->
-    <div class="panel">
-      <div class="ptit">✦ Prompts</div>
-      <div class="tabs">
-        <button class="tab on" onclick="setTab('m')">Manual</button>
-        <button class="tab" onclick="setTab('s')">Desde guión</button>
-      </div>
-      <div id="tm">
-        <span class="lbl">Un prompt por línea</span>
-        <textarea id="manP" rows="9" placeholder="Young adult Latin American man reviewing investments on laptop&#10;Gold coins floating on dark background&#10;Financial graph rising with green light&#10;Modern office with data screens"></textarea>
-        <div class="cnt"><span id="pcnt">0 prompts</span><span id="pest">—</span></div>
-      </div>
-      <div id="ts" style="display:none">
-        <span class="lbl">Guión completo — detecta [IMAGEN]</span>
-        <textarea id="scIn" rows="8" placeholder="Pega tu guión aquí.&#10;El sistema detecta:&#10;[IMAGEN]: descripción&#10;IMAGEN: descripción&#10;IMG: descripción"></textarea>
-        <button class="btn" style="margin-top:7px;width:100%" onclick="exScript()">⟳ Extraer prompts del guión</button>
-        <div id="exPr" style="display:none;margin-top:9px">
-          <span class="lbl">Prompts extraídos:</span>
-          <textarea id="exP" rows="4" style="margin-top:3px"></textarea>
-        </div>
-      </div>
-    </div>
-
-    <!-- AJUSTES -->
-    <div class="panel">
-      <div class="ptit">⚙ Ajustes</div>
-      <span class="lbl">Estilo del canal</span>
-      <div class="pfx" id="pfxBox"><b>SELECCIONA UN CANAL</b>El prefijo de estilo aparece aquí</div>
-      <span class="lbl">Prefijo extra (opcional)</span>
-      <input type="text" id="custPfx" placeholder="ej: cinematic lighting, 8k..." style="margin-bottom:12px">
-      <span class="lbl">Concurrencia — simultáneas: <span id="cLbl">3</span></span>
-      <input type="range" id="concR" min="1" max="8" value="3" step="1" oninput="document.getElementById('cLbl').textContent=this.value">
-      <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.6">
-        ComfyUI local · GPU RTX 3050 · Recomendado: 1-2 simultáneas con 4GB VRAM
-      </div>
-    </div>
-  </div>
-
-  <!-- RATIO -->
-  <div class="rbar">
-    <span class="rlbl">▸ Ratio</span>
-    <div class="rpls">
-      <div class="rp on" data-r="1:1"  data-w="1024" data-h="1024" onclick="setR(this)"><div class="rt" style="width:13px;height:13px"></div>1:1</div>
-      <div class="rp"    data-r="16:9" data-w="1344" data-h="768"  onclick="setR(this)"><div class="rt" style="width:20px;height:11px"></div>16:9</div>
-      <div class="rp"    data-r="9:16" data-w="768"  data-h="1344" onclick="setR(this)"><div class="rt" style="width:11px;height:20px"></div>9:16</div>
-      <div class="rp"    data-r="4:3"  data-w="1152" data-h="864"  onclick="setR(this)"><div class="rt" style="width:18px;height:13px"></div>4:3</div>
-      <div class="rp"    data-r="3:4"  data-w="864"  data-h="1152" onclick="setR(this)"><div class="rt" style="width:13px;height:18px"></div>3:4</div>
-    </div>
-    <div class="rinfo"><b id="rLbl">1:1 — Cuadrado</b><span id="rDs">Feed de Instagram y Facebook</span></div>
-  </div>
-
-  <!-- CONTROLS -->
-  <div class="ctrl">
-    <button class="btn btn-go" id="btnGo" onclick="run()">▶ Generar todo</button>
-    <button class="btn btn-stop" id="btnStop" onclick="doStop()" style="display:none">✕ Detener</button>
-    <div class="prw" id="prW" style="display:none">
-      <div class="prb"><div class="prf" id="prf"></div></div>
-      <div class="prt">Listas <span id="pCur">0</span> de <span id="pTot">0</span> · <span id="pPct">0%</span> · ⏱ <span id="pTimer">0:00</span></div>
-    </div>
-    <div class="spc"></div>
-    <div id="timerFinal" style="display:none;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--green);background:#dcfce7;border:1px solid #bbf7d0;border-radius:7px;padding:7px 14px">⏱ Tiempo total: <span id="timerFinalVal">—</span></div>
-    <button class="btn" id="btnZip" onclick="dlZip()" style="display:none">⬇ ZIP</button>
-    <button class="btn" onclick="clearAll()">⌫ Limpiar</button>
-  </div>
-
-  <!-- RESULTS -->
-  <div class="sec">03 — imágenes generadas</div>
-  <div id="res">
-    <div class="empty">Ingresa tu API key → selecciona canal → escribe prompts → <strong>Generar todo</strong></div>
+  <div class="hdr-right">
+    4 canales · 2 motores<br>
+    ComfyUI local + Gemini API
   </div>
 </div>
 
+<!-- ── 01 MODO DE GENERACIÓN ──────────────────────────────────────── -->
+<div class="sec">01 — motor de generación</div>
+<div class="mode-grid">
+
+  <!-- COMFYUI -->
+  <div class="mode-card cfy-card active" id="mc-comfy" onclick="setMode('comfy')">
+    <div class="mc-top">
+      <div class="mc-icon">⚡</div>
+      <div class="mc-badge">PRODUCCIÓN DIARIA</div>
+    </div>
+    <div class="mc-name">ComfyUI Local</div>
+    <div class="mc-desc">Tu GPU RTX 3050 genera localmente. Sin costo por imagen, ilimitado, sin internet.</div>
+    <div class="mc-footer">
+      <div class="mc-stats">
+        <div class="mc-stat"><b>$0</b>por imagen</div>
+        <div class="mc-stat"><b>~22min</b>54 imgs</div>
+      </div>
+      <div class="mc-radio"></div>
+    </div>
+  </div>
+
+  <!-- GEMINI -->
+  <div class="mode-card gem-card" id="mc-gemini" onclick="setMode('gemini')">
+    <div class="mc-top">
+      <div class="mc-icon">✦</div>
+      <div class="mc-badge">CALIDAD ESPECIAL</div>
+    </div>
+    <div class="mc-name">Gemini API</div>
+    <div class="mc-desc">Calidad superior para miniaturas, escenas clave o cuando necesitas texto legible en imagen.</div>
+    <div class="mc-footer">
+      <div class="mc-stats">
+        <div class="mc-stat"><b>$0.03</b>por imagen</div>
+        <div class="mc-stat"><b>~2min</b>54 imgs</div>
+      </div>
+      <div class="mc-radio"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CONFIG: COMFYUI -->
+<div class="config-panel cfy-panel visible" id="cfg-comfy">
+  <div class="cp-title">⚡ ComfyUI — Conexión Local</div>
+  <div class="cp-row">
+    <button class="cp-btn" onclick="checkComfy()">↻ Verificar conexión</button>
+  </div>
+  <div class="cp-status"><div class="dot" id="cfy-dot"></div><span id="cfy-msg">Haz clic en "Verificar conexión" para confirmar que ComfyUI está activo</span></div>
+  <div class="cp-info">
+    Para iniciar ComfyUI: abre CMD →
+    <code>cd C:\ComfyUI</code> →
+    <code>venv\Scripts\python.exe main.py --listen --lowvram --enable-cors-header</code>
+  </div>
+</div>
+
+<!-- CONFIG: GEMINI -->
+<div class="config-panel gem-panel" id="cfg-gemini">
+  <div class="cp-title">✦ Gemini API — Clave de acceso</div>
+  <div class="cp-row">
+    <input class="cp-input" type="password" id="gem-key" placeholder="AIzaSy... — pega tu API key aquí">
+    <button class="cp-btn" onclick="saveGemKey()">✓ Guardar</button>
+  </div>
+  <div class="cp-status"><div class="dot" id="gem-dot"></div><span id="gem-msg">Ingresa tu API key para activar Gemini</span></div>
+  <div class="cp-info">
+    Modelo activo: <code>imagen-3.0-generate-002</code> · Mejor para miniaturas e infografías con texto
+  </div>
+</div>
+
+<!-- ── 02 CANAL ───────────────────────────────────────────────────── -->
+<div class="sec">02 — canal</div>
+<div class="ch-grid" id="chGrid"></div>
+
+<!-- ── 03 CONFIGURACIÓN ───────────────────────────────────────────── -->
+<div class="sec">03 — prompts y ajustes</div>
+<div class="panels">
+
+  <!-- PROMPTS -->
+  <div class="panel">
+    <div class="panel-title">Prompts</div>
+    <div class="tabs">
+      <button class="tab on" onclick="setTab('m')">Manual</button>
+      <button class="tab" onclick="setTab('s')">Desde guión</button>
+    </div>
+    <div id="tm">
+      <label>Un prompt por línea — en inglés</label>
+      <textarea id="manP" rows="9" placeholder="Young adult Latin American man reviewing investments on laptop&#10;Gold coins floating on dark background&#10;Financial graph rising with green light"></textarea>
+      <div class="cnt"><span id="pcnt">0 prompts</span><span id="pest">—</span></div>
+    </div>
+    <div id="ts" style="display:none">
+      <label>Guión completo — detecta [IMAGEN] / IMAGEN: / IMG:</label>
+      <textarea id="scIn" rows="8" placeholder="Pega tu guión aquí. El sistema detecta marcadores [IMAGEN]:"></textarea>
+      <button class="btn" style="margin-top:8px;width:100%" onclick="exScript()">↻ Extraer prompts del guión</button>
+      <div id="exPr" style="display:none;margin-top:10px">
+        <label>Prompts extraídos</label>
+        <textarea id="exP" rows="4" style="margin-top:4px"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- AJUSTES -->
+  <div class="panel">
+    <div class="panel-title">Ajustes</div>
+    <label>Estilo del canal</label>
+    <div class="pfx-box" id="pfxBox"><b>selecciona un canal</b>El prefijo de estilo aparecerá aquí</div>
+    <label>Prefijo extra (opcional)</label>
+    <input type="text" id="custPfx" placeholder="ej: cinematic lighting, ultra detailed..." style="margin-bottom:12px">
+    <label>Concurrencia — <span id="cLbl">2</span> simultáneas</label>
+    <input type="range" id="concR" min="1" max="6" value="2" step="1" oninput="document.getElementById('cLbl').textContent=this.value">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;line-height:1.6" id="concHint">
+      ComfyUI · RTX 3050 8GB · Recomendado: 1-2 simultáneas
+    </div>
+  </div>
+</div>
+
+<!-- RATIO -->
+<div class="rbar">
+  <span class="rlbl">▸ Ratio</span>
+  <div class="rpls">
+    <div class="rp on" data-r="1:1"  data-w="1024" data-h="1024" onclick="setR(this)"><div class="rt" style="width:13px;height:13px"></div>1:1</div>
+    <div class="rp"    data-r="16:9" data-w="1344" data-h="768"  onclick="setR(this)"><div class="rt" style="width:20px;height:11px"></div>16:9</div>
+    <div class="rp"    data-r="9:16" data-w="768"  data-h="1344" onclick="setR(this)"><div class="rt" style="width:11px;height:20px"></div>9:16</div>
+    <div class="rp"    data-r="4:3"  data-w="1152" data-h="864"  onclick="setR(this)"><div class="rt" style="width:18px;height:13px"></div>4:3</div>
+    <div class="rp"    data-r="3:4"  data-w="864"  data-h="1152" onclick="setR(this)"><div class="rt" style="width:13px;height:18px"></div>3:4</div>
+  </div>
+  <div class="rinfo"><b id="rLbl">1:1 — Cuadrado</b><span id="rDs">Feed Instagram y Facebook</span></div>
+</div>
+
+<!-- CALIDAD GEMINI -->
+<div class="quality-bar" id="qualBar">
+  <span class="rlbl">✦ Calidad</span>
+  <div class="qpls">
+    <div class="qp on" data-q="standard" onclick="setQ(this)">Standard</div>
+    <div class="qp" data-q="hd" onclick="setQ(this)">HD</div>
+  </div>
+  <div class="rinfo"><b id="qLbl">Standard</b><span id="qDs">Balanceado — costo menor</span></div>
+</div>
+
+<!-- ── CONTROLS ──────────────────────────────────────────────────── -->
+<div class="ctrl">
+  <button class="btn btn-go" id="btnGo" onclick="run()">▶ Generar todo</button>
+  <button class="btn btn-stop" id="btnStop" onclick="doStop()" style="display:none">✕ Detener</button>
+  <div class="prw" id="prW" style="display:none">
+    <div class="prb"><div class="prf" id="prf"></div></div>
+    <div class="prt">Listas <span id="pCur">0</span> de <span id="pTot">0</span> · <span id="pPct">0%</span> · ⏱ <span id="pTimer">0:00</span></div>
+  </div>
+  <div class="spc"></div>
+  <div class="timer-final" id="timerFinal">⏱ Total: <span id="timerFinalVal">—</span></div>
+  <button class="btn" id="btnZip" onclick="dlZip()" style="display:none">⬇ ZIP</button>
+  <button class="btn" onclick="clearAll()">⌫ Limpiar</button>
+</div>
+
+<!-- ── 04 RESULTADOS ─────────────────────────────────────────────── -->
+<div class="sec">04 — imágenes generadas</div>
+<div id="res">
+  <div class="empty">Selecciona motor → canal → escribe prompts → <strong>Generar todo</strong></div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- LIGHTBOX -->
 <div id="lb">
   <button id="lbX" onclick="closeLb()">✕</button>
   <img id="lbImg" src="" alt="">
-  <a id="lbDl" href="" download="">⬇ Descargar</a>
+  <a id="lbDl" href="" download="">⬇ Descargar imagen</a>
 </div>
 
 <script>
-// ── DATOS ────────────────────────────────────────────────────────────
+// ── DATOS ─────────────────────────────────────────────────────────
 var CHS = [
   {
-    id:'bonny', name:'Bonny Finance', desc:'Finanzas · YouTube', tag:'YT', c:'#10b981', r:'16:9',
-    pfx:'2D flat design illustration for adult audience, motion graphics style, young adult Latin American man late 20s named Bonny, short dark hair, warm medium brown skin tone, slim build, modern casual clothes jeans and polo shirt, mature expressive adult face, NOT a child NOT chibi NOT kids cartoon, teal #00d4aa and dark navy #0d1b2a color palette, financial investing money theme, clean minimal professional background,'
+    id:'bonny', name:'Bonny Finance', desc:'Finanzas · YouTube', tag:'YT', c:'#00d4aa', r:'16:9',
+    pfx:'2D flat design illustration adult audience, motion graphics style, young adult Latin American man late 20s named Bonny, short dark hair, warm medium brown skin tone, slim build modern casual clothes jeans and polo shirt, mature expressive adult face, NOT a child NOT chibi NOT kids cartoon, teal #00d4aa and dark navy #0d1b2a color palette, financial investing money theme, clean minimal professional background,'
   },
   {
     id:'enigma', name:'Enigma IA', desc:'Misterio · Facebook', tag:'FB', c:'#8b5cf6', r:'9:16',
-    pfx:'cinematic hyper-realistic photography, dark mysterious atmosphere, deep purple and gold tones, dramatic volumetric lighting, ancient Latin American historical relics and mysteries, dense fog atmosphere, ultra detailed 8k,'
+    pfx:'cinematic hyper-realistic photography, dark mysterious atmosphere, deep purple and gold tones, dramatic volumetric lighting, ancient historical relics and mysteries, dense fog atmosphere, ultra detailed 8k,'
   },
   {
     id:'conexion', name:'Conexión y Sabiduría', desc:'Espiritual · YouTube', tag:'YT', c:'#f59e0b', r:'16:9',
@@ -281,64 +580,115 @@ var CHS = [
     pfx:'stoic powerful cinematic aesthetic, dark charcoal and deep crimson palette, strong adult masculine figure, dramatic shadows, ancient Roman Greek visual references, film grain texture, hyper-realistic,'
   },
   {
-    id:'custom', name:'+ Canal propio', desc:'Personalizable', tag:'—', c:'#3b82f6', r:'1:1',
-    pfx:''
+    id:'custom', name:'+ Canal propio', desc:'Personalizable', tag:'—', c:'#3b82f6', r:'1:1', pfx:''
   }
 ];
 
 var RATIOS = {
-  '1:1': {ar:'1:1',  lbl:'1:1 — Cuadrado',   ds:'Feed Instagram y Facebook'},
-  '16:9':{ar:'16:9', lbl:'16:9 — Horizontal', ds:'YouTube y Facebook video'},
-  '9:16':{ar:'9:16', lbl:'9:16 — Vertical',   ds:'Reels, TikTok y Stories'},
-  '4:3': {ar:'4:3',  lbl:'4:3',               ds:'Presentaciones y posts'},
-  '3:4': {ar:'3:4',  lbl:'3:4',               ds:'Pinterest y stories'}
+  '1:1': {lbl:'1:1 — Cuadrado',   ds:'Feed Instagram y Facebook'},
+  '16:9':{lbl:'16:9 — Horizontal',ds:'YouTube y Facebook video'},
+  '9:16':{lbl:'9:16 — Vertical',  ds:'Reels, TikTok y Stories'},
+  '4:3': {lbl:'4:3',              ds:'Presentaciones y posts'},
+  '3:4': {lbl:'3:4',              ds:'Pinterest y stories'}
 };
 
-// ── ESTADO ───────────────────────────────────────────────────────────
-var activeCh = null, activeR = '1:1', aTab = 'm';
-var b64s = [], stopped = false, timers = {};
+// ── ESTADO ────────────────────────────────────────────────────────
+var activeMode = 'comfy';
+var activeCh   = null;
+var activeR    = '1:1';
+var activeQ    = 'standard';
+var aTab       = 'm';
+var b64s       = [], stopped = false, timers = {};
+var gemKey     = '';
+var COMFY_URL  = 'http://127.0.0.1:8188';
 
-// ── INIT ─────────────────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────────────
 (function(){
+  // build channels
   var g = document.getElementById('chGrid');
   g.innerHTML = CHS.map(function(c){
     return '<div class="ch" id="ch-'+c.id+'" style="--c:'+c.c+'" onclick="pickCh(\''+c.id+'\')">'
       +'<div class="ch-tag">'+c.tag+'</div>'
-      +'<div class="ch-nm"><span class="ch-dot"></span>'+c.name+'</div>'
-      +'<div class="ch-ds">'+c.desc+'</div></div>';
+      +'<div class="ch-dot"></div>'
+      +'<div class="ch-name">'+c.name+'</div>'
+      +'<div class="ch-desc">'+c.desc+'</div></div>';
   }).join('');
   document.getElementById('manP').addEventListener('input', updCnt);
   pickCh('bonny');
-  // Verificar ComfyUI al cargar
-  setTimeout(checkComfy, 500);
+  setTimeout(checkComfy, 600);
 })();
 
-// ── COMFYUI CONNECTION ────────────────────────────────────────────────
-function checkComfy(){
-  setSt('wait', 'Verificando conexión con ComfyUI...');
-  fetch(COMFY_URL + '/system_stats')
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      var gpu = d.devices && d.devices[0] ? d.devices[0].name : 'GPU';
-      setSt('ok', '✓ ComfyUI activo — ' + gpu + ' · Listo para generar');
-    })
-    .catch(function(){
-      setSt('err', '✗ ComfyUI no está corriendo — inicia ComfyUI primero');
-    });
-}
-function saveKey(){ checkComfy(); }
-function useAnon(){ checkComfy(); }
-function setSt(t,m){
-  document.getElementById('sDot').className='dot '+(t||'');
-  document.getElementById('sMsg').textContent=m;
+// ── MODE ──────────────────────────────────────────────────────────
+function setMode(m){
+  activeMode = m;
+  document.getElementById('mc-comfy').classList.toggle('active', m==='comfy');
+  document.getElementById('mc-gemini').classList.toggle('active', m==='gemini');
+  document.getElementById('cfg-comfy').classList.toggle('visible', m==='comfy');
+  document.getElementById('cfg-gemini').classList.toggle('visible', m==='gemini');
+  document.getElementById('qualBar').classList.toggle('visible', m==='gemini');
+
+  // update CSS accent
+  var accent = m==='gemini' ? 'var(--gem)' : 'var(--cfy)';
+  var bg     = m==='gemini' ? 'var(--gem-bg)' : 'var(--cfy-bg)';
+  document.documentElement.style.setProperty('--active-accent', accent);
+  document.documentElement.style.setProperty('--active-bg', bg);
+
+  // concurrency hint
+  document.getElementById('concHint').textContent = m==='gemini'
+    ? 'Gemini API · Máximo 3 simultáneas recomendado'
+    : 'ComfyUI · RTX 3050 8GB · Recomendado: 1-2 simultáneas';
+
+  // empty message
+  if(!b64s.filter(Boolean).length) resetEmpty();
 }
 
-// ── CANAL ────────────────────────────────────────────────────────────
+function resetEmpty(){
+  document.getElementById('res').innerHTML = '<div class="empty">Selecciona motor → canal → escribe prompts → <strong>Generar todo</strong></div>';
+}
+
+// ── COMFYUI CHECK ─────────────────────────────────────────────────
+function checkComfy(){
+  setCfySt('spin','Verificando conexión con ComfyUI...');
+  fetch(COMFY_URL+'/system_stats')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var gpu = d.devices&&d.devices[0]?d.devices[0].name:'GPU detectada';
+      setCfySt('ok','✓ ComfyUI activo — '+gpu+' · Listo para generar');
+    })
+    .catch(function(){
+      setCfySt('err','✗ ComfyUI no está corriendo — inicia ComfyUI primero');
+    });
+}
+function setCfySt(t,m){
+  document.getElementById('cfy-dot').className='dot '+t;
+  document.getElementById('cfy-msg').textContent=m;
+}
+
+// ── GEMINI KEY ────────────────────────────────────────────────────
+function saveGemKey(){
+  var k = document.getElementById('gem-key').value.trim();
+  if(!k){ alert('Ingresa una API key válida'); return; }
+  gemKey = k;
+  setGemSt('pulse','Verificando API key...');
+  // Quick test
+  fetch('https://generativelanguage.googleapis.com/v1beta/models?key='+k)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.models){ setGemSt('ok','✓ API key válida · Gemini listo para generar'); }
+      else{ setGemSt('err','✗ API key inválida — verifica en aistudio.google.com'); }
+    })
+    .catch(function(){ setGemSt('err','✗ Error de conexión — verifica tu internet'); });
+}
+function setGemSt(t,m){
+  document.getElementById('gem-dot').className='dot '+t;
+  document.getElementById('gem-msg').textContent=m;
+}
+
+// ── CANAL ─────────────────────────────────────────────────────────
 function pickCh(id){
-  activeCh = CHS.find(function(c){ return c.id===id; });
-  document.querySelectorAll('.ch').forEach(function(e){ e.classList.remove('on'); });
+  activeCh = CHS.find(function(c){return c.id===id;});
+  document.querySelectorAll('.ch').forEach(function(e){e.classList.remove('on');});
   document.getElementById('ch-'+id).classList.add('on');
-  document.documentElement.style.setProperty('--a', activeCh.c);
   var b = document.getElementById('pfxBox');
   b.innerHTML = activeCh.pfx
     ? '<b>'+activeCh.name.toUpperCase()+'</b>'+activeCh.pfx
@@ -346,20 +696,20 @@ function pickCh(id){
   setRv(activeCh.r);
 }
 
-// ── TABS ─────────────────────────────────────────────────────────────
+// ── TABS ──────────────────────────────────────────────────────────
 function setTab(t){
   aTab=t;
-  document.querySelectorAll('.tab').forEach(function(el,i){ el.classList.toggle('on',['m','s'][i]===t); });
+  document.querySelectorAll('.tab').forEach(function(el,i){el.classList.toggle('on',['m','s'][i]===t);});
   document.getElementById('tm').style.display=t==='m'?'block':'none';
   document.getElementById('ts').style.display=t==='s'?'block':'none';
 }
 function exScript(){
-  var lines=document.getElementById('scIn').value.split('\n'), found=[];
+  var lines=document.getElementById('scIn').value.split('\n'),found=[];
   var pats=[/^\[IMAGEN\][:：]\s*(.+)/i,/^IMAGEN[:：]\s*(.+)/i,/^IMG[:：]\s*(.+)/i,/^\[VISUAL\][:：]\s*(.+)/i];
   lines.forEach(function(l){
-    for(var i=0;i<pats.length;i++){ var m=l.trim().match(pats[i]); if(m){found.push(m[1].trim());break;} }
+    for(var i=0;i<pats.length;i++){var m=l.trim().match(pats[i]);if(m){found.push(m[1].trim());break;}}
   });
-  if(!found.length){ alert('No se encontraron bloques [IMAGEN]'); return; }
+  if(!found.length){alert('No se encontraron bloques [IMAGEN]');return;}
   document.getElementById('exPr').style.display='block';
   document.getElementById('exP').value=found.join('\n');
   alert('✓ '+found.length+' prompts extraídos');
@@ -371,10 +721,10 @@ function getPrompts(){
 function updCnt(){
   var n=getPrompts().length;
   document.getElementById('pcnt').textContent=n+' prompt'+(n!==1?'s':'');
-  document.getElementById('pest').textContent=n>0?'~'+Math.ceil(n*5/60)+'min':'—';
+  document.getElementById('pest').textContent=n>0?'~'+Math.ceil(n*(activeMode==='gemini'?1.5:5)/60)+'min':'—';
 }
 
-// ── RATIO ────────────────────────────────────────────────────────────
+// ── RATIO & QUALITY ───────────────────────────────────────────────
 function setR(el){
   document.querySelectorAll('.rp').forEach(function(p){p.classList.remove('on');}); el.classList.add('on');
   activeR=el.dataset.r;
@@ -382,169 +732,141 @@ function setR(el){
   document.getElementById('rLbl').textContent=i.lbl||activeR;
   document.getElementById('rDs').textContent=i.ds||'';
 }
-function setRv(v){ var el=document.querySelector('.rp[data-r="'+v+'"]'); if(el)setR(el); }
+function setRv(v){var el=document.querySelector('.rp[data-r="'+v+'"]');if(el)setR(el);}
+function setQ(el){
+  document.querySelectorAll('.qp').forEach(function(p){p.classList.remove('on');}); el.classList.add('on');
+  activeQ=el.dataset.q;
+  document.getElementById('qLbl').textContent=el.textContent;
+  document.getElementById('qDs').textContent=activeQ==='hd'?'Alta calidad — costo mayor':'Balanceado — costo menor';
+}
+function getDim(){
+  var el=document.querySelector('.rp.on');
+  return{w:parseInt(el&&el.dataset.w||1024),h:parseInt(el&&el.dataset.h||1024)};
+}
 
-// ── PROMPT BUILDER ────────────────────────────────────────────────────
+// ── PROMPT BUILDER ────────────────────────────────────────────────
 function buildP(p){
   var cust=document.getElementById('custPfx').value.trim();
   var style=activeCh?activeCh.pfx:'';
   return [cust,style,p].filter(Boolean).join(' ');
 }
 
-// ── GENERAR UNA IMAGEN — ComfyUI Local (100% gratis, GPU propia) ─────
-var COMFY_URL = 'http://127.0.0.1:8188';
-
-async function genOne(userP){
-  var prompt = buildP(userP);
-  var dim = getDim();
-
-  // 1 — Enviar el workflow a la cola de ComfyUI
-  var workflow = buildWorkflow(prompt, dim.w, dim.h);
-  var queueResp = await fetch(COMFY_URL + '/prompt', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: workflow, client_id: 'dainel-studios' })
-  });
-  if(!queueResp.ok) throw new Error('Error al enviar a ComfyUI: ' + queueResp.status);
-  var queueData = await queueResp.json();
-  var promptId = queueData.prompt_id;
-
-  // 2 — Esperar que termine (polling cada 2 segundos)
-  var maxWait = 120; // 2 minutos máximo
-  for(var i=0; i<maxWait; i++){
+// ── COMFYUI GENERATION ────────────────────────────────────────────
+var COMFY_URL='http://127.0.0.1:8188';
+async function genOneComfy(userP){
+  var prompt=buildP(userP);
+  var dim=getDim();
+  var workflow=buildWorkflow(prompt,dim.w,dim.h);
+  var queueResp=await fetch(COMFY_URL+'/prompt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:workflow,client_id:'dainel-studios'})});
+  if(!queueResp.ok) throw new Error('Error al enviar a ComfyUI: '+queueResp.status);
+  var queueData=await queueResp.json();
+  var promptId=queueData.prompt_id;
+  for(var i=0;i<120;i++){
     await sleep(2000);
-    var histResp = await fetch(COMFY_URL + '/history/' + promptId);
+    var histResp=await fetch(COMFY_URL+'/history/'+promptId);
     if(!histResp.ok) continue;
-    var hist = await histResp.json();
-    if(hist[promptId] && hist[promptId].outputs){
-      var outputs = hist[promptId].outputs;
-      // Buscar la imagen en los outputs
+    var hist=await histResp.json();
+    if(hist[promptId]&&hist[promptId].outputs){
+      var outputs=hist[promptId].outputs;
       for(var nodeId in outputs){
-        var nodeOut = outputs[nodeId];
-        if(nodeOut.images && nodeOut.images.length > 0){
-          var img = nodeOut.images[0];
-          // 3 — Descargar la imagen generada
-          var imgResp = await fetch(COMFY_URL + '/view?filename=' + encodeURIComponent(img.filename) + '&subfolder=' + encodeURIComponent(img.subfolder||'') + '&type=' + (img.type||'output'));
+        var nodeOut=outputs[nodeId];
+        if(nodeOut.images&&nodeOut.images.length>0){
+          var img=nodeOut.images[0];
+          var imgResp=await fetch(COMFY_URL+'/view?filename='+encodeURIComponent(img.filename)+'&subfolder='+encodeURIComponent(img.subfolder||'')+'&type='+(img.type||'output'));
           if(!imgResp.ok) throw new Error('Error al descargar imagen');
-          var blob = await imgResp.blob();
+          var blob=await imgResp.blob();
           return await blobToB64(blob);
         }
       }
     }
   }
-  throw new Error('Timeout — ComfyUI tardó más de 2 minutos');
+  throw new Error('Timeout — ComfyUI tardó más de 4 minutos');
 }
 
-function buildWorkflow(prompt, width, height){
-  var seed = Math.floor(Math.random() * 999999999);
-  var neg = 'ugly, deformed, noisy, blurry, low quality, child, chibi, 3d render, photorealistic, watermark, text';
-  var ch = activeCh ? activeCh.id : '';
-
-  // Canal Bonny Finance — usa IP-Adapter con imagen de referencia
-  if(ch === 'bonny'){
-    return {
-      "1": { "class_type": "CheckpointLoaderSimple", "inputs": { "ckpt_name": "dreamshaperXL_lightningDPMSDE.safetensors" } },
-      "2": { "class_type": "CLIPTextEncode", "inputs": { "text": prompt, "clip": ["1", 1] } },
-      "3": { "class_type": "CLIPTextEncode", "inputs": { "text": neg, "clip": ["1", 1] } },
-      "4": { "class_type": "EmptyLatentImage", "inputs": { "width": width, "height": height, "batch_size": 1 } },
-      "8": { "class_type": "LoadImage", "inputs": { "image": "bonny_reference.png" } },
-      "9": { "class_type": "IPAdapterUnifiedLoader", "inputs": { "model": ["1", 0], "preset": "PLUS (high strength)" } },
-      "10": { "class_type": "IPAdapterAdvanced", "inputs": {
-        "model": ["9", 0],
-        "ipadapter": ["9", 1],
-        "image": ["8", 0],
-        "weight": 0.35,
-        "weight_type": "linear",
-        "combine_embeds": "concat",
-        "start_at": 0.0,
-        "end_at": 1.0,
-        "embeds_scaling": "V only"
-      }},
-      "5": { "class_type": "KSampler", "inputs": { "model": ["10", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["4", 0], "seed": seed, "steps": 6, "cfg": 2, "sampler_name": "dpmpp_sde", "scheduler": "karras", "denoise": 1 } },
-      "6": { "class_type": "VAEDecode", "inputs": { "samples": ["5", 0], "vae": ["1", 2] } },
-      "7": { "class_type": "SaveImage", "inputs": { "images": ["6", 0], "filename_prefix": "bonny_" } }
+function buildWorkflow(prompt,width,height){
+  var seed=Math.floor(Math.random()*999999999);
+  var neg='ugly, deformed, noisy, blurry, low quality, child, chibi, 3d render, photorealistic, watermark, text';
+  var ch=activeCh?activeCh.id:'';
+  if(ch==='bonny'){
+    return{
+      "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:"dreamshaperXL_lightningDPMSDE.safetensors"}},
+      "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
+      "3":{class_type:"CLIPTextEncode",inputs:{text:neg,clip:["1",1]}},
+      "4":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
+      "8":{class_type:"LoadImage",inputs:{image:"bonny_reference.png"}},
+      "9":{class_type:"IPAdapterUnifiedLoader",inputs:{model:["1",0],preset:"PLUS (high strength)"}},
+      "10":{class_type:"IPAdapterAdvanced",inputs:{model:["9",0],ipadapter:["9",1],image:["8",0],weight:0.35,weight_type:"linear",combine_embeds:"concat",start_at:0.0,end_at:1.0,embeds_scaling:"V only"}},
+      "5":{class_type:"KSampler",inputs:{model:["10",0],positive:["2",0],negative:["3",0],latent_image:["4",0],seed:seed,steps:6,cfg:2,sampler_name:"dpmpp_sde",scheduler:"karras",denoise:1}},
+      "6":{class_type:"VAEDecode",inputs:{samples:["5",0],vae:["1",2]}},
+      "7":{class_type:"SaveImage",inputs:{images:["6",0],filename_prefix:"bonny_"}}
     };
   }
-
-  // Otros canales — workflow estándar sin IP-Adapter
-  return {
-    "1": { "class_type": "CheckpointLoaderSimple", "inputs": { "ckpt_name": "dreamshaperXL_lightningDPMSDE.safetensors" } },
-    "2": { "class_type": "CLIPTextEncode", "inputs": { "text": prompt, "clip": ["1", 1] } },
-    "3": { "class_type": "CLIPTextEncode", "inputs": { "text": neg, "clip": ["1", 1] } },
-    "4": { "class_type": "EmptyLatentImage", "inputs": { "width": width, "height": height, "batch_size": 1 } },
-    "5": { "class_type": "KSampler", "inputs": { "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["4", 0], "seed": seed, "steps": 6, "cfg": 2, "sampler_name": "dpmpp_sde", "scheduler": "karras", "denoise": 1 } },
-    "6": { "class_type": "VAEDecode", "inputs": { "samples": ["5", 0], "vae": ["1", 2] } },
-    "7": { "class_type": "SaveImage", "inputs": { "images": ["6", 0], "filename_prefix": "canal_" } }
+  return{
+    "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:"dreamshaperXL_lightningDPMSDE.safetensors"}},
+    "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
+    "3":{class_type:"CLIPTextEncode",inputs:{text:neg,clip:["1",1]}},
+    "4":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
+    "5":{class_type:"KSampler",inputs:{model:["1",0],positive:["2",0],negative:["3",0],latent_image:["4",0],seed:seed,steps:6,cfg:2,sampler_name:"dpmpp_sde",scheduler:"karras",denoise:1}},
+    "6":{class_type:"VAEDecode",inputs:{samples:["5",0],vae:["1",2]}},
+    "7":{class_type:"SaveImage",inputs:{images:["6",0],filename_prefix:"canal_"}}
   };
 }
 
-function blobToB64(blob){
-  return new Promise(function(res, rej){
-    var r = new FileReader(); r.onload = function(){ res(r.result); }; r.onerror = rej; r.readAsDataURL(blob);
+// ── GEMINI GENERATION ─────────────────────────────────────────────
+async function genOneGemini(userP){
+  if(!gemKey) throw new Error('API key no configurada. Ingresa tu Gemini API key.');
+  var prompt=buildP(userP);
+  var dim=getDim();
+  var ar=activeR==='16:9'?'16:9':activeR==='9:16'?'9:16':activeR==='4:3'?'4:3':activeR==='3:4'?'3:4':'1:1';
+
+  var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key='+gemKey,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      instances:[{prompt:prompt}],
+      parameters:{sampleCount:1,aspectRatio:ar,safetyFilterLevel:'block_few'}
+    })
   });
-}
-function getDim(){
-  var el = document.querySelector('.rp.on');
-  return { w: parseInt(el&&el.dataset.w||1024), h: parseInt(el&&el.dataset.h||1024) };
-}
-
-// ── TIMER ────────────────────────────────────────────────────────────
-var timerInterval = null;
-var timerStart = 0;
-
-function startTimer(){
-  timerStart = Date.now();
-  document.getElementById('timerFinal').style.display = 'none';
-  timerInterval = setInterval(function(){
-    var elapsed = Math.floor((Date.now() - timerStart) / 1000);
-    var m = Math.floor(elapsed / 60);
-    var s = elapsed % 60;
-    document.getElementById('pTimer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
-  }, 1000);
+  if(!resp.ok){
+    var err=await resp.json().catch(function(){return{};});
+    throw new Error(err.error&&err.error.message?err.error.message:'Error Gemini '+resp.status);
+  }
+  var data=await resp.json();
+  if(!data.predictions||!data.predictions[0]||!data.predictions[0].bytesBase64Encoded)
+    throw new Error('Sin imagen en respuesta de Gemini');
+  return 'data:image/png;base64,'+data.predictions[0].bytesBase64Encoded;
 }
 
-function stopTimer(){
-  clearInterval(timerInterval);
-  var elapsed = Math.floor((Date.now() - timerStart) / 1000);
-  var m = Math.floor(elapsed / 60);
-  var s = elapsed % 60;
-  var txt = m > 0 ? m + ' min ' + s + ' seg' : s + ' segundos';
-  document.getElementById('timerFinalVal').textContent = txt;
-  document.getElementById('timerFinal').style.display = 'inline-flex';
-  document.getElementById('pTimer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
-}
-
-// ── RUN ──────────────────────────────────────────────────────────────
+// ── RUN ───────────────────────────────────────────────────────────
 async function run(){
-  if(!activeCh){ alert('Selecciona un canal'); return; }
-  var prompts = getPrompts();
-  if(!prompts.length){ alert('Añade al menos un prompt'); return; }
-
+  if(!activeCh){alert('Selecciona un canal');return;}
+  if(activeMode==='gemini'&&!gemKey){alert('Ingresa y guarda tu Gemini API key primero');return;}
+  var prompts=getPrompts();
+  if(!prompts.length){alert('Añade al menos un prompt');return;}
   stopped=false; b64s=new Array(prompts.length).fill(null);
   document.getElementById('btnGo').disabled=true;
   document.getElementById('btnStop').style.display='inline-flex';
   document.getElementById('prW').style.display='block';
   document.getElementById('btnZip').style.display='none';
+  document.getElementById('timerFinal').style.display='none';
   startTimer();
-
   var conc=parseInt(document.getElementById('concR').value);
   var done=0;
   mkSkels(prompts); updPr(0,prompts.length);
-
   for(var i=0;i<prompts.length;i+=conc){
     if(stopped)break;
     var batch=prompts.slice(i,i+conc);
-    var results=await Promise.allSettled(batch.map(function(p){return genOne(p);}));
+    var results=await Promise.allSettled(batch.map(function(p){
+      return activeMode==='gemini'?genOneGemini(p):genOneComfy(p);
+    }));
     results.forEach(function(r,j){
       var idx=i+j;
-      if(r.status==='fulfilled'){ b64s[idx]=r.value; showOk(idx,r.value,prompts[idx]); }
-      else{ showErr(idx,r.reason?r.reason.message:'Error'); }
+      if(r.status==='fulfilled'){b64s[idx]=r.value;showOk(idx,r.value,prompts[idx]);}
+      else{showErr(idx,r.reason?r.reason.message:'Error desconocido');}
       done++; updPr(done,prompts.length);
     });
-    // Pequeña pausa entre batches para respetar el rate limit
-    if(!stopped && i+conc<prompts.length) await sleep(1500);
+    if(!stopped&&i+conc<prompts.length) await sleep(activeMode==='gemini'?800:1500);
   }
-
   stopTimer();
   stopped=true;
   document.getElementById('btnGo').disabled=false;
@@ -553,16 +875,19 @@ async function run(){
   if(ok>0) document.getElementById('btnZip').style.display='inline-flex';
 }
 
-function doStop(){ stopped=true; document.getElementById('btnGo').disabled=false; document.getElementById('btnStop').style.display='none'; }
+function doStop(){stopped=true;document.getElementById('btnGo').disabled=false;document.getElementById('btnStop').style.display='none';}
 function clearAll(){
   stopped=true; b64s=[];
   Object.values(timers).forEach(clearInterval); timers={};
-  document.getElementById('res').innerHTML='<div class="empty">Ingresa tu API key → selecciona canal → escribe prompts → <strong>Generar todo</strong></div>';
-  document.getElementById('prW').style.display='none'; document.getElementById('btnZip').style.display='none';
-  document.getElementById('btnGo').disabled=false; document.getElementById('btnStop').style.display='none';
+  resetEmpty();
+  document.getElementById('prW').style.display='none';
+  document.getElementById('btnZip').style.display='none';
+  document.getElementById('timerFinal').style.display='none';
+  document.getElementById('btnGo').disabled=false;
+  document.getElementById('btnStop').style.display='none';
 }
 
-// ── RENDER ───────────────────────────────────────────────────────────
+// ── RENDER ────────────────────────────────────────────────────────
 function mkSkels(prompts){
   var h='<div class="igr">';
   prompts.forEach(function(p,i){
@@ -583,7 +908,6 @@ function mkSkels(prompts){
     },1000);
   });
 }
-
 function showOk(idx,b64,prompt){
   clearInterval(timers[idx]);
   var card=document.getElementById('ic'+idx),sk=document.getElementById('sk'+idx),st=document.getElementById('ist'+idx);
@@ -592,19 +916,17 @@ function showOk(idx,b64,prompt){
   img.onclick=function(){openLb(b64,idx);};
   if(sk)sk.parentNode.replaceChild(img,sk);
   var btns=document.createElement('div'); btns.className='ic-btns';
-  btns.innerHTML='<a class="dl" href="'+b64+'" download="'+(activeCh.id)+'_'+pad(idx+1)+'.jpg">⬇ Guardar</a>'
+  btns.innerHTML='<a class="dl" href="'+b64+'" download="'+(activeCh.id)+'_'+pad(idx+1)+'.png">⬇ Guardar</a>'
     +'<button onclick="openLb(b64s['+idx+'],'+idx+')">⤢ Ver</button>';
   card.appendChild(btns);
   if(st){st.className='ic-st ok';st.textContent='✓ OK';}
 }
-
 function showErr(idx,msg){
   clearInterval(timers[idx]);
   var sk=document.getElementById('sk'+idx),st=document.getElementById('ist'+idx);
-  if(sk){sk.style.background='rgba(239,68,68,.04)';sk.innerHTML='<div style="font-size:9px;color:#ef4444;padding:12px;text-align:center;line-height:1.6">'+esc(msg)+'</div>';}
+  if(sk){sk.style.background='rgba(239,68,68,.04)';sk.innerHTML='<div style="font-size:9px;color:#ef4444;padding:12px;text-align:center;line-height:1.6;font-family:JetBrains Mono,monospace">'+esc(msg)+'</div>';}
   if(st){st.className='ic-st er';st.textContent='✗ Error';}
 }
-
 function updPr(c,t){
   var p=t>0?Math.round(c/t*100):0;
   document.getElementById('prf').style.width=p+'%';
@@ -613,33 +935,56 @@ function updPr(c,t){
   document.getElementById('pPct').textContent=p+'%';
 }
 
-// ── ZIP ──────────────────────────────────────────────────────────────
+// ── ZIP ───────────────────────────────────────────────────────────
 async function dlZip(){
   if(typeof JSZip==='undefined'||!b64s.filter(Boolean).length)return;
-  var zip=new JSZip(), folder=zip.folder(activeCh.id+'_imagenes');
+  var zip=new JSZip(),folder=zip.folder((activeCh?activeCh.id:'canal')+'_imagenes');
   b64s.forEach(function(d,i){
-    if(d)folder.file('img_'+pad(i+1)+'.jpg',d.split(',')[1],{base64:true});
+    if(d){
+      var base=d.split(',')[1];
+      folder.file('img_'+pad(i+1)+'.png',base,{base64:true});
+    }
   });
   var blob=await zip.generateAsync({type:'blob'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=activeCh.id+'_'+Date.now()+'.zip'; a.click();
+  a.download=(activeCh?activeCh.id:'canal')+'_'+new Date().toISOString().slice(0,10)+'.zip';
+  a.click();
 }
 
-// ── LIGHTBOX ─────────────────────────────────────────────────────────
+// ── LIGHTBOX ──────────────────────────────────────────────────────
 function openLb(src,idx){
   document.getElementById('lbImg').src=src;
   document.getElementById('lbDl').href=src;
-  document.getElementById('lbDl').download=activeCh.id+'_'+pad((idx||0)+1)+'.jpg';
+  document.getElementById('lbDl').download=(activeCh?activeCh.id:'img')+'_'+pad((idx||0)+1)+'.png';
   document.getElementById('lb').classList.add('op');
 }
-function closeLb(){ document.getElementById('lb').classList.remove('op'); document.getElementById('lbImg').src=''; }
+function closeLb(){document.getElementById('lb').classList.remove('op');document.getElementById('lbImg').src='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLb();});
 
-// ── UTILS ────────────────────────────────────────────────────────────
+// ── TIMER ─────────────────────────────────────────────────────────
+var timerInterval=null,timerStart=0;
+function startTimer(){
+  timerStart=Date.now();
+  timerInterval=setInterval(function(){
+    var e=Math.floor((Date.now()-timerStart)/1000);
+    document.getElementById('pTimer').textContent=Math.floor(e/60)+':'+(e%60<10?'0':'')+e%60;
+  },1000);
+}
+function stopTimer(){
+  clearInterval(timerInterval);
+  var e=Math.floor((Date.now()-timerStart)/1000);
+  var txt=Math.floor(e/60)>0?Math.floor(e/60)+' min '+e%60+' seg':e%60+' segundos';
+  document.getElementById('timerFinalVal').textContent=txt;
+  document.getElementById('timerFinal').style.display='inline-flex';
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function blobToB64(blob){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=rej;r.readAsDataURL(blob);});}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function pad(n){return String(n).padStart(2,'0');}
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 </script>
 </body>
 </html>
+
