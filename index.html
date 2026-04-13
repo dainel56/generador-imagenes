@@ -374,6 +374,40 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
   color:#08080e;text-decoration:none;
 }
 
+
+/* ── ADVANCED SETTINGS ───────────────────────────────────────────── */
+.adv-toggle{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 18px;
+  cursor:pointer;margin-bottom:4px;transition:all .15s;
+  user-select:none;
+}
+.adv-toggle:hover{border-color:var(--border2)}
+.adv-toggle-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.adv-toggle-label span{color:var(--active-accent)}
+.adv-arrow{font-size:10px;color:var(--muted);transition:transform .2s}
+.adv-arrow.open{transform:rotate(180deg)}
+.adv-panel{
+  background:var(--bg2);border:1px solid var(--border);
+  border-top:none;border-radius:0 0 var(--radius) var(--radius);
+  padding:16px 18px;margin-bottom:14px;display:none;
+}
+.adv-panel.open{display:block}
+.adv-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.adv-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:640px){.adv-grid,.adv-grid-3{grid-template-columns:1fr}}
+.adv-field label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+.adv-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:7px;color:var(--text);
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  padding:8px 11px;outline:none;transition:all .18s;
+}
+.adv-input:focus{border-color:var(--active-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--active-accent) 12%,transparent)}
+.adv-input option{background:var(--bg2)}
+.adv-note{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);line-height:1.6;background:rgba(255,255,255,.02);border-radius:6px;padding:8px 11px;margin-top:4px}
+.adv-note b{color:var(--active-accent)}
 /* ── SCROLLBAR ───────────────────────────────────────────────────── */
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
@@ -508,6 +542,57 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
   </div>
 </div>
 
+<!-- ── AJUSTES AVANZADOS ComfyUI ─────────────────────────────────── -->
+<div class="adv-toggle" onclick="toggleAdv()" id="advToggle">
+  <div class="adv-toggle-label">⚙ Ajustes avanzados ComfyUI — <span id="advModelLabel">sd_xl_base_1.0.safetensors · steps 30 · cfg 7.5</span></div>
+  <div class="adv-arrow" id="advArrow">▼</div>
+</div>
+<div class="adv-panel" id="advPanel">
+  <div class="adv-grid">
+    <div class="adv-field">
+      <label>Modelo — nombre exacto del archivo</label>
+      <input class="adv-input" type="text" id="advModel" value="sd_xl_base_1.0.safetensors" placeholder="modelo.safetensors" oninput="updateAdvLabel()">
+    </div>
+    <div class="adv-field">
+      <label>Sampler</label>
+      <select class="adv-input" id="advSampler" onchange="updateAdvLabel()">
+        <option value="euler" selected>euler</option>
+        <option value="euler_ancestral">euler_ancestral</option>
+        <option value="dpmpp_2m">dpmpp_2m</option>
+        <option value="dpmpp_sde">dpmpp_sde</option>
+        <option value="dpmpp_2m_sde">dpmpp_2m_sde</option>
+        <option value="ddim">ddim</option>
+        <option value="uni_pc">uni_pc</option>
+      </select>
+    </div>
+  </div>
+  <div class="adv-grid-3">
+    <div class="adv-field">
+      <label>Steps — pasos de generación</label>
+      <input class="adv-input" type="number" id="advSteps" value="30" min="1" max="150" oninput="updateAdvLabel()">
+    </div>
+    <div class="adv-field">
+      <label>CFG — obediencia al prompt</label>
+      <input class="adv-input" type="number" id="advCfg" value="7.5" min="1" max="20" step="0.5" oninput="updateAdvLabel()">
+    </div>
+    <div class="adv-field">
+      <label>Scheduler</label>
+      <select class="adv-input" id="advScheduler">
+        <option value="karras" selected>karras</option>
+        <option value="normal">normal</option>
+        <option value="exponential">exponential</option>
+        <option value="sgm_uniform">sgm_uniform</option>
+        <option value="simple">simple</option>
+      </select>
+    </div>
+  </div>
+  <div class="adv-note">
+    <b>SDXL Base 1.0</b> → steps 25-35 · cfg 7-8 · euler · karras &nbsp;|&nbsp;
+    <b>Juggernaut XL Lightning</b> → steps 6-8 · cfg 2 · dpmpp_sde · karras &nbsp;|&nbsp;
+    <b>DreamShaper XL Lightning</b> → steps 6-8 · cfg 2 · dpmpp_sde · karras
+  </div>
+</div>
+
 <!-- RATIO -->
 <div class="rbar">
   <span class="rlbl">▸ Ratio</span>
@@ -565,7 +650,7 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
 var CHS = [
   {
     id:'bonny', name:'Bonny Finance', desc:'Finanzas · YouTube', tag:'YT', c:'#00d4aa', r:'16:9',
-    pfx:'2D flat design adult illustration, teal and dark navy color palette, always include detailed background environment and setting, young adult Latin American man late 20s short dark hair warm brown skin navy polo shirt slim build mature face NOT chibi NOT child,'
+    pfx:'2D flat vector illustration cel shading, always include detailed background environment and setting, teal #00d4aa and dark navy #0d1b2a color palette, young adult Latin American man late 20s short dark messy hair warm brown skin tone navy polo shirt slim athletic build mature face, NOT chibi NOT child NOT cartoon kids,'
   },
   {
     id:'enigma', name:'Enigma IA', desc:'Misterio · Facebook', tag:'FB', c:'#8b5cf6', r:'9:16',
@@ -646,6 +731,29 @@ function resetEmpty(){
   document.getElementById('res').innerHTML = '<div class="empty">Selecciona motor → canal → escribe prompts → <strong>Generar todo</strong></div>';
 }
 
+
+// ── ADVANCED SETTINGS ─────────────────────────────────────────────
+function toggleAdv(){
+  var panel=document.getElementById('advPanel');
+  var arrow=document.getElementById('advArrow');
+  var open=panel.classList.toggle('open');
+  arrow.classList.toggle('open',open);
+}
+function updateAdvLabel(){
+  var m=document.getElementById('advModel').value||'modelo';
+  var s=document.getElementById('advSteps').value||'30';
+  var c=document.getElementById('advCfg').value||'7.5';
+  document.getElementById('advModelLabel').textContent=m+' · steps '+s+' · cfg '+c;
+}
+function getAdvSettings(){
+  return{
+    model: document.getElementById('advModel').value.trim()||'sd_xl_base_1.0.safetensors',
+    steps: parseInt(document.getElementById('advSteps').value)||30,
+    cfg:   parseFloat(document.getElementById('advCfg').value)||7.5,
+    sampler: document.getElementById('advSampler').value||'euler',
+    scheduler: document.getElementById('advScheduler').value||'karras'
+  };
+}
 // ── COMFYUI CHECK ─────────────────────────────────────────────────
 function checkComfy(){
   setCfySt('spin','Verificando conexión con ComfyUI...');
@@ -788,6 +896,7 @@ async function genOneComfy(userP){
 
 function buildWorkflow(prompt,width,height){
   var seed=Math.floor(Math.random()*999999999);
+  var adv=getAdvSettings();
 
   // NEGATIVO GENERAL — previene duplicados, fondo vacío y personaje solo
   var neg='ugly, deformed, noisy, blurry, low quality, child, chibi, watermark, text, '+
@@ -798,22 +907,21 @@ function buildWorkflow(prompt,width,height){
   // NEGATIVO BONNY — agrega control extra de consistencia
   var negBonny=neg+', beard, mustache, bald, glasses, hat, old man, woman, feminine';
 
-  var MODEL='juggernautXL_juggXILightningByRD.safetensors';
   var ch=activeCh?activeCh.id:'';
 
   if(ch==='bonny'){
     return{
-      "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:MODEL}},
+      "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:adv.model}},
       "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
       "3":{class_type:"CLIPTextEncode",inputs:{text:negBonny,clip:["1",1]}},
       "4":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
       "5":{class_type:"KSampler",inputs:{
         model:["1",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
         seed:seed,
-        steps:20,
-        cfg:7,
-        sampler_name:"euler",
-        scheduler:"karras",
+        steps:adv.steps,
+        cfg:adv.cfg,
+        sampler_name:adv.sampler,
+        scheduler:adv.scheduler,
         denoise:1
       }},
       "6":{class_type:"VAEDecode",inputs:{samples:["5",0],vae:["1",2]}},
@@ -821,19 +929,19 @@ function buildWorkflow(prompt,width,height){
     };
   }
 
-  // WORKFLOW ESTÁNDAR — otros canales sin IP-Adapter
+  // WORKFLOW ESTÁNDAR — otros canales
   return{
-    "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:MODEL}},
+    "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:adv.model}},
     "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
     "3":{class_type:"CLIPTextEncode",inputs:{text:neg,clip:["1",1]}},
     "4":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
     "5":{class_type:"KSampler",inputs:{
       model:["1",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
       seed:seed,
-      steps:20,
-      cfg:7,
-      sampler_name:"euler",
-      scheduler:"karras",
+      steps:adv.steps,
+      cfg:adv.cfg,
+      sampler_name:adv.sampler,
+      scheduler:adv.scheduler,
       denoise:1
     }},
     "6":{class_type:"VAEDecode",inputs:{samples:["5",0],vae:["1",2]}},
