@@ -544,13 +544,14 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
 
 <!-- ── AJUSTES AVANZADOS ComfyUI ─────────────────────────────────── -->
 <div class="adv-toggle" onclick="toggleAdv()" id="advToggle">
-  <div class="adv-toggle-label">⚙ Ajustes avanzados ComfyUI — <span id="advModelLabel">sd_xl_base_1.0.safetensors · steps 30 · cfg 7.5</span></div>
+  <div class="adv-toggle-label">⚙ Ajustes avanzados ComfyUI — <span id="advModelLabel">realvisxlV50_v50Bakedvae.safetensors · steps 30 · cfg 6</span></div>
   <div class="adv-arrow" id="advArrow">▼</div>
 </div>
 <div class="adv-panel" id="advPanel" style="display:block">
   <!-- Presets rápidos -->
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
     <span style="font-family:JetBrains Mono,monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);align-self:center">Preset:</span>
+    <button class="btn" style="font-size:10px;padding:4px 12px" onclick="applyPreset('realvis')">✦ RealVis XL v5</button>
     <button class="btn" style="font-size:10px;padding:4px 12px" onclick="applyPreset('sdxl')">SDXL Base</button>
     <button class="btn" style="font-size:10px;padding:4px 12px" onclick="applyPreset('juggernaut')">Juggernaut Lightning</button>
     <button class="btn" style="font-size:10px;padding:4px 12px" onclick="applyPreset('dreamshaper')">DreamShaper Lightning</button>
@@ -558,16 +559,16 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
   <div class="adv-grid">
     <div class="adv-field">
       <label>Modelo — nombre exacto del archivo</label>
-      <input class="adv-input" type="text" id="advModel" value="sd_xl_base_1.0.safetensors" placeholder="modelo.safetensors" oninput="updateAdvLabel()">
+      <input class="adv-input" type="text" id="advModel" value="realvisxlV50_v50Bakedvae.safetensors" placeholder="modelo.safetensors" oninput="updateAdvLabel()">
     </div>
     <div class="adv-field">
       <label>Sampler</label>
       <select class="adv-input" id="advSampler" onchange="updateAdvLabel()">
-        <option value="euler" selected>euler</option>
+        <option value="euler">euler</option>
         <option value="euler_ancestral">euler_ancestral</option>
         <option value="dpmpp_2m">dpmpp_2m</option>
         <option value="dpmpp_sde">dpmpp_sde</option>
-        <option value="dpmpp_2m_sde">dpmpp_2m_sde</option>
+        <option value="dpmpp_2m_sde" selected>dpmpp_2m_sde</option>
         <option value="ddim">ddim</option>
         <option value="uni_pc">uni_pc</option>
       </select>
@@ -580,7 +581,7 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
     </div>
     <div class="adv-field">
       <label>CFG — obediencia al prompt</label>
-      <input class="adv-input" type="number" id="advCfg" value="7.5" min="1" max="20" step="0.5" oninput="updateAdvLabel()">
+      <input class="adv-input" type="number" id="advCfg" value="6" min="1" max="20" step="0.5" oninput="updateAdvLabel()">
     </div>
     <div class="adv-field">
       <label>Scheduler</label>
@@ -594,9 +595,9 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
     </div>
   </div>
   <div class="adv-note">
+    <b>RealVis XL v5</b> → steps 25-35 · cfg 5-7 · dpmpp_2m_sde · karras &nbsp;|&nbsp;
     <b>SDXL Base 1.0</b> → steps 25-35 · cfg 7-8 · euler · karras &nbsp;|&nbsp;
-    <b>Juggernaut XL Lightning</b> → steps 6-8 · cfg 2 · dpmpp_sde · karras &nbsp;|&nbsp;
-    <b>DreamShaper XL Lightning</b> → steps 6-8 · cfg 2 · dpmpp_sde · karras
+    <b>Juggernaut/DreamShaper Lightning</b> → steps 6-8 · cfg 2 · dpmpp_sde · karras
   </div>
 </div>
 
@@ -749,9 +750,10 @@ function toggleAdv(){
 }
 function applyPreset(p){
   var presets={
-    sdxl:       {model:'sd_xl_base_1.0.safetensors',        steps:30, cfg:7.5, sampler:'euler',     scheduler:'karras'},
-    juggernaut: {model:'juggernautXL_juggXILightningByRD.safetensors', steps:6,  cfg:2,   sampler:'dpmpp_sde', scheduler:'karras'},
-    dreamshaper:{model:'dreamshaperXL_lightningDPMSDE.safetensors',    steps:6,  cfg:2,   sampler:'dpmpp_sde', scheduler:'karras'}
+    sdxl:        {model:'sd_xl_base_1.0.safetensors',                  steps:30, cfg:7.5, sampler:'euler',        scheduler:'karras'},
+    realvis:     {model:'realvisxlV50_v50Bakedvae.safetensors',         steps:30, cfg:6,   sampler:'dpmpp_2m_sde', scheduler:'karras'},
+    juggernaut:  {model:'juggernautXL_juggXILightningByRD.safetensors', steps:6,  cfg:2,   sampler:'dpmpp_sde',    scheduler:'karras'},
+    dreamshaper: {model:'dreamshaperXL_lightningDPMSDE.safetensors',    steps:6,  cfg:2,   sampler:'dpmpp_sde',    scheduler:'karras'}
   };
   var s=presets[p]; if(!s)return;
   document.getElementById('advModel').value=s.model;
@@ -1146,3 +1148,4 @@ function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 </script>
 </body>
 </html>
+
