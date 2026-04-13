@@ -565,7 +565,7 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
 var CHS = [
   {
     id:'bonny', name:'Bonny Finance', desc:'Finanzas · YouTube', tag:'YT', c:'#00d4aa', r:'16:9',
-    pfx:'2D flat design illustration adult audience, motion graphics style, young adult Latin American man late 20s named Bonny, short dark hair, warm medium brown skin tone, slim build modern casual clothes jeans and polo shirt, mature expressive adult face, NOT a child NOT chibi NOT kids cartoon, teal #00d4aa and dark navy #0d1b2a color palette, financial investing money theme, clean minimal professional background,'
+    pfx:'2D flat design adult illustration, teal and dark navy color palette, clean professional scene with background and environment, young adult Latin American man late 20s short dark hair warm brown skin navy polo shirt slim build mature face NOT chibi NOT child,'
   },
   {
     id:'enigma', name:'Enigma IA', desc:'Misterio · Facebook', tag:'FB', c:'#8b5cf6', r:'9:16',
@@ -745,10 +745,13 @@ function getDim(){
 }
 
 // ── PROMPT BUILDER ────────────────────────────────────────────────
+// ORDEN CRÍTICO: acción/ambiente PRIMERO, luego estilo del canal
+// SDXL da más peso a lo que aparece primero en el prompt
 function buildP(p){
   var cust=document.getElementById('custPfx').value.trim();
   var style=activeCh?activeCh.pfx:'';
-  return [cust,style,p].filter(Boolean).join(' ');
+  // prompt del usuario va PRIMERO para que SDXL lo priorice
+  return [p,cust,style].filter(Boolean).join(', ');
 }
 
 // ── COMFYUI GENERATION ────────────────────────────────────────────
@@ -785,28 +788,65 @@ async function genOneComfy(userP){
 
 function buildWorkflow(prompt,width,height){
   var seed=Math.floor(Math.random()*999999999);
-  var neg='ugly, deformed, noisy, blurry, low quality, child, chibi, 3d render, photorealistic, watermark, text';
+
+  // NEGATIVO GENERAL — previene duplicados, fondo vacío y personaje solo
+  var neg='ugly, deformed, noisy, blurry, low quality, child, chibi, watermark, text, '+
+    'duplicate, multiple people, cloned face, two characters, mirrored, '+
+    'plain white background, plain background, isolated character, portrait only, '+
+    'cropped, out of frame, bad anatomy, extra limbs, mutation';
+
+  // NEGATIVO BONNY — agrega control extra de consistencia
+  var negBonny=neg+', beard, mustache, bald, glasses, hat, old man, woman, feminine';
+
+  var MODEL='juggernautXL_juggXILightningByRD.safetensors';
   var ch=activeCh?activeCh.id:'';
+
   if(ch==='bonny'){
     return{
-      "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:"dreamshaperXL_lightningDPMSDE.safetensors"}},
+      "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:MODEL}},
       "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
-      "3":{class_type:"CLIPTextEncode",inputs:{text:neg,clip:["1",1]}},
+      "3":{class_type:"CLIPTextEncode",inputs:{text:negBonny,clip:["1",1]}},
       "4":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
       "8":{class_type:"LoadImage",inputs:{image:"bonny_reference.png"}},
-      "9":{class_type:"IPAdapterUnifiedLoader",inputs:{model:["1",0],preset:"PLUS FACEID (portaits)"}},
-      "10":{class_type:"IPAdapterAdvanced",inputs:{model:["9",0],ipadapter:["9",1],image:["8",0],weight:0.35,weight_type:"linear",combine_embeds:"concat",start_at:0.0,end_at:1.0,embeds_scaling:"V only"}},
-      "5":{class_type:"KSampler",inputs:{model:["10",0],positive:["2",0],negative:["3",0],latent_image:["4",0],seed:seed,steps:6,cfg:2,sampler_name:"dpmpp_sde",scheduler:"karras",denoise:1}},
+      "9":{class_type:"IPAdapterUnifiedLoader",inputs:{model:["1",0],preset:"PLUS FACE (portraits)"}},
+      "10":{class_type:"IPAdapterAdvanced",inputs:{
+        model:["9",0],ipadapter:["9",1],image:["8",0],
+        weight:0.20,          // bajo para que el prompt controle acción y ambiente
+        weight_type:"linear",
+        combine_embeds:"concat",
+        start_at:0.0,
+        end_at:0.7,           // IP-Adapter solo actúa en 70% inicial — evita duplicados
+        embeds_scaling:"V only"
+      }},
+      "5":{class_type:"KSampler",inputs:{
+        model:["10",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
+        seed:seed,
+        steps:20,             // suficientes pasos para interpretar prompt complejo
+        cfg:7,                // obediencia alta al prompt
+        sampler_name:"euler", // más estable con IP-Adapter
+        scheduler:"karras",
+        denoise:1
+      }},
       "6":{class_type:"VAEDecode",inputs:{samples:["5",0],vae:["1",2]}},
       "7":{class_type:"SaveImage",inputs:{images:["6",0],filename_prefix:"bonny_"}}
     };
   }
+
+  // WORKFLOW ESTÁNDAR — otros canales sin IP-Adapter
   return{
-    "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:"dreamshaperXL_lightningDPMSDE.safetensors"}},
+    "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:MODEL}},
     "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
     "3":{class_type:"CLIPTextEncode",inputs:{text:neg,clip:["1",1]}},
     "4":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
-    "5":{class_type:"KSampler",inputs:{model:["1",0],positive:["2",0],negative:["3",0],latent_image:["4",0],seed:seed,steps:6,cfg:2,sampler_name:"dpmpp_sde",scheduler:"karras",denoise:1}},
+    "5":{class_type:"KSampler",inputs:{
+      model:["1",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
+      seed:seed,
+      steps:20,
+      cfg:7,
+      sampler_name:"euler",
+      scheduler:"karras",
+      denoise:1
+    }},
     "6":{class_type:"VAEDecode",inputs:{samples:["5",0],vae:["1",2]}},
     "7":{class_type:"SaveImage",inputs:{images:["6",0],filename_prefix:"canal_"}}
   };
