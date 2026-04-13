@@ -594,33 +594,54 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
       </select>
     </div>
   </div>
-  <!-- IP-Adapter Weight — solo Bonny Finance -->
-  <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
-    <div style="font-family:JetBrains Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
-      ⚡ IP-Adapter weight — solo Bonny Finance
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-      <span style="font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);white-space:nowrap">Weight:</span>
-      <div style="display:flex;gap:5px;flex-wrap:wrap">
-        <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setIPW(0.10)">0.10 — Solo rostro</button>
-        <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setIPW(0.20)">0.20 — Sutil</button>
-        <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setIPW(0.30)">0.30 — Balanceado ✦</button>
-        <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setIPW(0.45)">0.45 — Fuerte</button>
-        <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setIPW(0.60)">0.60 — Máximo</button>
-      </div>
-      <input type="number" id="ipWeight" value="0.30" min="0.05" max="1.0" step="0.05"
-        style="width:70px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:JetBrains Mono,monospace;font-size:12px;padding:6px 8px;outline:none">
-    </div>
-    <div class="adv-note">
-      <b>0.10-0.20</b> solo captura rasgos faciales, prompt controla todo · 
-      <b>0.30</b> balance óptimo probado ✦ · 
-      <b>0.45+</b> más consistencia pero puede ignorar el prompt
-    </div>
-  </div>
+
   <div class="adv-note" style="margin-top:8px">
     <b>RealVis XL v5</b> → steps 25-35 · cfg 5-7 · dpmpp_2m_sde · karras &nbsp;|&nbsp;
     <b>SDXL Base 1.0</b> → steps 25-35 · cfg 7-8 · euler · karras &nbsp;|&nbsp;
     <b>Juggernaut/DreamShaper Lightning</b> → steps 6-8 · cfg 2 · dpmpp_sde · karras
+  </div>
+
+  <!-- IP-Adapter OPCIONAL — solo Bonny Finance -->
+  <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+      <div style="font-family:JetBrains Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">
+        ⚡ IP-Adapter — solo Bonny Finance
+      </div>
+      <!-- Toggle switch -->
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+        <div style="position:relative;width:40px;height:22px" onclick="toggleIP()">
+          <input type="checkbox" id="ipToggle" style="opacity:0;width:0;height:0;position:absolute">
+          <div id="ipTrack" style="position:absolute;inset:0;border-radius:11px;background:var(--border2);transition:background .2s;border:1px solid var(--border)"></div>
+          <div id="ipThumb" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:all .2s"></div>
+        </div>
+        <span id="ipToggleLabel" style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--muted)">Desactivado</span>
+      </label>
+    </div>
+
+    <!-- IP controls — hidden when off -->
+    <div id="ipControls" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);white-space:nowrap">Imagen ref:</span>
+        <input type="text" id="ipRefImage" value="bonny_reference.png"
+          style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:JetBrains Mono,monospace;font-size:11px;padding:6px 9px;outline:none"
+          placeholder="nombre_archivo.png">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);white-space:nowrap">Weight:</span>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setIPW(0.10)">0.10</button>
+          <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setIPW(0.20)">0.20</button>
+          <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setIPW(0.30)">0.30 ✦</button>
+          <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setIPW(0.45)">0.45</button>
+          <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setIPW(0.60)">0.60</button>
+        </div>
+        <input type="number" id="ipWeight" value="0.30" min="0.05" max="1.0" step="0.05"
+          style="width:65px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:JetBrains Mono,monospace;font-size:12px;padding:5px 8px;outline:none">
+      </div>
+      <div class="adv-note">
+        <b>0.10-0.20</b> solo rostro · <b>0.30 ✦</b> balance óptimo · <b>0.45+</b> más consistencia, puede ignorar prompt
+      </div>
+    </div>
   </div>
 </div>
 
@@ -785,6 +806,40 @@ function applyPreset(p){
   document.getElementById('advSampler').value=s.sampler;
   document.getElementById('advScheduler').value=s.scheduler;
   updateAdvLabel();
+}
+function toggleIP(){
+  var cb=document.getElementById('ipToggle');
+  var track=document.getElementById('ipTrack');
+  var thumb=document.getElementById('ipThumb');
+  var label=document.getElementById('ipToggleLabel');
+  var controls=document.getElementById('ipControls');
+  cb.checked=!cb.checked;
+  if(cb.checked){
+    track.style.background='var(--cfy)';
+    thumb.style.background='#fff';
+    thumb.style.left='21px';
+    label.style.color='var(--cfy)';
+    label.textContent='Activado';
+    controls.style.display='block';
+  } else {
+    track.style.background='var(--border2)';
+    thumb.style.background='var(--muted)';
+    thumb.style.left='3px';
+    label.style.color='var(--muted)';
+    label.textContent='Desactivado';
+    controls.style.display='none';
+  }
+}
+function setIPW(v){
+  document.getElementById('ipWeight').value=v;
+}
+function getIPSettings(){
+  var active=document.getElementById('ipToggle')&&document.getElementById('ipToggle').checked;
+  return{
+    active: active,
+    ref: active?(document.getElementById('ipRefImage').value.trim()||'bonny_reference.png'):'',
+    weight: active?(parseFloat(document.getElementById('ipWeight').value)||0.30):0
+  };
 }
 function setIPW(v){
   document.getElementById('ipWeight').value=v;
@@ -962,31 +1017,40 @@ function buildWorkflow(prompt,width,height){
   var ch=activeCh?activeCh.id:'';
 
   if(ch==='bonny'){
-    var ipW=parseFloat(document.getElementById('ipWeight').value)||0.30;
+    var ip=getIPSettings();
+    // CON IP-Adapter
+    if(ip.active){
+      return{
+        "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:adv.model}},
+        "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
+        "3":{class_type:"CLIPTextEncode",inputs:{text:negBonny,clip:["1",1]}},
+        "4":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
+        "8":{class_type:"LoadImage",inputs:{image:ip.ref}},
+        "9":{class_type:"IPAdapterUnifiedLoader",inputs:{model:["1",0],preset:"PLUS (high strength)"}},
+        "10":{class_type:"IPAdapterAdvanced",inputs:{
+          model:["9",0],ipadapter:["9",1],image:["8",0],
+          weight:ip.weight,weight_type:"linear",combine_embeds:"concat",
+          start_at:0.0,end_at:0.75,embeds_scaling:"V only"
+        }},
+        "5":{class_type:"KSampler",inputs:{
+          model:["10",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
+          seed:seed,steps:adv.steps,cfg:adv.cfg,
+          sampler_name:adv.sampler,scheduler:adv.scheduler,denoise:1
+        }},
+        "6":{class_type:"VAEDecode",inputs:{samples:["5",0],vae:["1",2]}},
+        "7":{class_type:"SaveImage",inputs:{images:["6",0],filename_prefix:"bonny_"}}
+      };
+    }
+    // SIN IP-Adapter
     return{
       "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:adv.model}},
       "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
       "3":{class_type:"CLIPTextEncode",inputs:{text:negBonny,clip:["1",1]}},
       "4":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
-      "8":{class_type:"LoadImage",inputs:{image:"bonny_reference.png"}},
-      "9":{class_type:"IPAdapterUnifiedLoader",inputs:{model:["1",0],preset:"PLUS (high strength)"}},
-      "10":{class_type:"IPAdapterAdvanced",inputs:{
-        model:["9",0],ipadapter:["9",1],image:["8",0],
-        weight:ipW,
-        weight_type:"linear",
-        combine_embeds:"concat",
-        start_at:0.0,
-        end_at:0.75,
-        embeds_scaling:"V only"
-      }},
       "5":{class_type:"KSampler",inputs:{
-        model:["10",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
-        seed:seed,
-        steps:adv.steps,
-        cfg:adv.cfg,
-        sampler_name:adv.sampler,
-        scheduler:adv.scheduler,
-        denoise:1
+        model:["1",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
+        seed:seed,steps:adv.steps,cfg:adv.cfg,
+        sampler_name:adv.sampler,scheduler:adv.scheduler,denoise:1
       }},
       "6":{class_type:"VAEDecode",inputs:{samples:["5",0],vae:["1",2]}},
       "7":{class_type:"SaveImage",inputs:{images:["6",0],filename_prefix:"bonny_"}}
@@ -1188,4 +1252,3 @@ function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 </script>
 </body>
 </html>
-
