@@ -547,7 +547,14 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
   <div class="adv-toggle-label">⚙ Ajustes avanzados ComfyUI — <span id="advModelLabel">sd_xl_base_1.0.safetensors · steps 30 · cfg 7.5</span></div>
   <div class="adv-arrow" id="advArrow">▼</div>
 </div>
-<div class="adv-panel" id="advPanel">
+<div class="adv-panel" id="advPanel" style="display:block">
+  <!-- Presets rápidos -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+    <span style="font-family:JetBrains Mono,monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);align-self:center">Preset:</span>
+    <button class="btn" style="font-size:10px;padding:4px 12px" onclick="applyPreset('sdxl')">SDXL Base</button>
+    <button class="btn" style="font-size:10px;padding:4px 12px" onclick="applyPreset('juggernaut')">Juggernaut Lightning</button>
+    <button class="btn" style="font-size:10px;padding:4px 12px" onclick="applyPreset('dreamshaper')">DreamShaper Lightning</button>
+  </div>
   <div class="adv-grid">
     <div class="adv-field">
       <label>Modelo — nombre exacto del archivo</label>
@@ -736,8 +743,23 @@ function resetEmpty(){
 function toggleAdv(){
   var panel=document.getElementById('advPanel');
   var arrow=document.getElementById('advArrow');
-  var open=panel.classList.toggle('open');
-  arrow.classList.toggle('open',open);
+  var isOpen=panel.style.display==='block';
+  panel.style.display=isOpen?'none':'block';
+  arrow.classList.toggle('open',!isOpen);
+}
+function applyPreset(p){
+  var presets={
+    sdxl:       {model:'sd_xl_base_1.0.safetensors',        steps:30, cfg:7.5, sampler:'euler',     scheduler:'karras'},
+    juggernaut: {model:'juggernautXL_juggXILightningByRD.safetensors', steps:6,  cfg:2,   sampler:'dpmpp_sde', scheduler:'karras'},
+    dreamshaper:{model:'dreamshaperXL_lightningDPMSDE.safetensors',    steps:6,  cfg:2,   sampler:'dpmpp_sde', scheduler:'karras'}
+  };
+  var s=presets[p]; if(!s)return;
+  document.getElementById('advModel').value=s.model;
+  document.getElementById('advSteps').value=s.steps;
+  document.getElementById('advCfg').value=s.cfg;
+  document.getElementById('advSampler').value=s.sampler;
+  document.getElementById('advScheduler').value=s.scheduler;
+  updateAdvLabel();
 }
 function updateAdvLabel(){
   var m=document.getElementById('advModel').value||'modelo';
