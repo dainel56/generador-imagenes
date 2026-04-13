@@ -764,7 +764,7 @@ async function genOneComfy(userP){
   if(!queueResp.ok) throw new Error('Error al enviar a ComfyUI: '+queueResp.status);
   var queueData=await queueResp.json();
   var promptId=queueData.prompt_id;
-  for(var i=0;i<180;i++){
+  for(var i=0;i<120;i++){
     await sleep(2000);
     var histResp=await fetch(COMFY_URL+'/history/'+promptId);
     if(!histResp.ok) continue;
@@ -807,23 +807,12 @@ function buildWorkflow(prompt,width,height){
       "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
       "3":{class_type:"CLIPTextEncode",inputs:{text:negBonny,clip:["1",1]}},
       "4":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
-      "8":{class_type:"LoadImage",inputs:{image:"bonny_reference.png"}},
-      "9":{class_type:"IPAdapterUnifiedLoader",inputs:{model:["1",0],preset:"PLUS FACE (portraits)"}},
-      "10":{class_type:"IPAdapterAdvanced",inputs:{
-        model:["9",0],ipadapter:["9",1],image:["8",0],
-        weight:0.20,          // bajo para que el prompt controle acción y ambiente
-        weight_type:"linear",
-        combine_embeds:"concat",
-        start_at:0.0,
-        end_at:0.7,           // IP-Adapter solo actúa en 70% inicial — evita duplicados
-        embeds_scaling:"V only"
-      }},
       "5":{class_type:"KSampler",inputs:{
-        model:["10",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
+        model:["1",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
         seed:seed,
-        steps:12,             // suficientes pasos para interpretar prompt complejo
-        cfg:7,                // obediencia alta al prompt
-        sampler_name:"euler", // más estable con IP-Adapter
+        steps:20,
+        cfg:7,
+        sampler_name:"euler",
         scheduler:"karras",
         denoise:1
       }},
@@ -841,7 +830,7 @@ function buildWorkflow(prompt,width,height){
     "5":{class_type:"KSampler",inputs:{
       model:["1",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
       seed:seed,
-      steps:12,
+      steps:20,
       cfg:7,
       sampler_name:"euler",
       scheduler:"karras",
