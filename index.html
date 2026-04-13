@@ -764,7 +764,7 @@ async function genOneComfy(userP){
   if(!queueResp.ok) throw new Error('Error al enviar a ComfyUI: '+queueResp.status);
   var queueData=await queueResp.json();
   var promptId=queueData.prompt_id;
-  for(var i=0;i<120;i++){
+  for(var i=0;i<180;i++){
     await sleep(2000);
     var histResp=await fetch(COMFY_URL+'/history/'+promptId);
     if(!histResp.ok) continue;
@@ -821,7 +821,7 @@ function buildWorkflow(prompt,width,height){
       "5":{class_type:"KSampler",inputs:{
         model:["10",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
         seed:seed,
-        steps:20,             // suficientes pasos para interpretar prompt complejo
+        steps:12,             // suficientes pasos para interpretar prompt complejo
         cfg:7,                // obediencia alta al prompt
         sampler_name:"euler", // más estable con IP-Adapter
         scheduler:"karras",
@@ -841,7 +841,7 @@ function buildWorkflow(prompt,width,height){
     "5":{class_type:"KSampler",inputs:{
       model:["1",0],positive:["2",0],negative:["3",0],latent_image:["4",0],
       seed:seed,
-      steps:20,
+      steps:12,
       cfg:7,
       sampler_name:"euler",
       scheduler:"karras",
