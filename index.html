@@ -1021,51 +1021,73 @@ function buildWorkflow(prompt,width,height){
     var ref=ip.ref||'bonny_reference.png';
     var ipW=ip.weight||0.30;
 
-    // WORKFLOW EXACTO exportado desde ComfyUI — con IP-Adapter opcional
-    var wf={
+    // WORKFLOW EXACTO — API format exportado desde ComfyUI
+    // Nodos: 1 Checkpoint · 2 Prompt+ · 3 Prompt- · 4 KSampler
+    //        5 LatentImage · 6 VAEDecode · 7 SaveImage
+    //        11 LoadImage · 12 IPAdapterModelLoader
+    //        13 IPAdapterAdvanced · 14 IPAdapterUnifiedLoader
+
+    if(ip.active){
+      return{
+        "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:adv.model}},
+        "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
+        "3":{class_type:"CLIPTextEncode",inputs:{text:negBonny,clip:["1",1]}},
+        "4":{class_type:"KSampler",inputs:{
+          seed:seed,
+          steps:adv.steps,
+          cfg:adv.cfg,
+          sampler_name:adv.sampler,
+          scheduler:adv.scheduler,
+          denoise:1,
+          model:["13",0],
+          positive:["2",0],
+          negative:["3",0],
+          latent_image:["5",0]
+        }},
+        "5":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
+        "6":{class_type:"VAEDecode",inputs:{samples:["4",0],vae:["1",2]}},
+        "7":{class_type:"SaveImage",inputs:{filename_prefix:"bonny_",images:["6",0]}},
+        "11":{class_type:"LoadImage",inputs:{image:ref}},
+        "12":{class_type:"IPAdapterModelLoader",inputs:{ipadapter_file:"ip-adapter_sdxl.safetensors"}},
+        "13":{class_type:"IPAdapterAdvanced",inputs:{
+          weight:ipW,
+          weight_type:"linear",
+          combine_embeds:"concat",
+          start_at:0,
+          end_at:0.75,
+          embeds_scaling:"V only",
+          model:["14",0],
+          ipadapter:["14",1],
+          image:["11",0]
+        }},
+        "14":{class_type:"IPAdapterUnifiedLoader",inputs:{
+          preset:"PLUS (high strength)",
+          model:["1",0]
+        }}
+      };
+    }
+
+    // SIN IP-Adapter — workflow limpio
+    return{
       "1":{class_type:"CheckpointLoaderSimple",inputs:{ckpt_name:adv.model}},
       "2":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["1",1]}},
       "3":{class_type:"CLIPTextEncode",inputs:{text:negBonny,clip:["1",1]}},
+      "4":{class_type:"KSampler",inputs:{
+        seed:seed,
+        steps:adv.steps,
+        cfg:adv.cfg,
+        sampler_name:adv.sampler,
+        scheduler:adv.scheduler,
+        denoise:1,
+        model:["1",0],
+        positive:["2",0],
+        negative:["3",0],
+        latent_image:["5",0]
+      }},
       "5":{class_type:"EmptyLatentImage",inputs:{width:width,height:height,batch_size:1}},
       "6":{class_type:"VAEDecode",inputs:{samples:["4",0],vae:["1",2]}},
-      "7":{class_type:"SaveImage",inputs:{filename_prefix:"bonny_",images:["6",0]}},
-      "11":{class_type:"LoadImage",inputs:{image:ref}},
-      "12":{class_type:"IPAdapterModelLoader",inputs:{ipadapter_file:"ip-adapter_sdxl.safetensors"}},
-      "13":{class_type:"IPAdapterAdvanced",inputs:{
-        weight:ipW,
-        weight_type:"linear",
-        combine_embeds:"concat",
-        start_at:0,
-        end_at:1,
-        embeds_scaling:"V only",
-        model:["14",0],
-        ipadapter:["14",1],
-        image:["11",0]
-      }},
-      "14":{class_type:"IPAdapterUnifiedLoader",inputs:{preset:"PLUS (high strength)",model:["1",0]}}
+      "7":{class_type:"SaveImage",inputs:{filename_prefix:"bonny_",images:["6",0]}}
     };
-
-    if(ip.active){
-      // CON IP-Adapter — KSampler conectado al modelo con IP
-      wf["4"]={class_type:"KSampler",inputs:{
-        seed:seed,steps:adv.steps,cfg:adv.cfg,
-        sampler_name:adv.sampler,scheduler:adv.scheduler,denoise:1,
-        model:["13",0],positive:["2",0],negative:["3",0],latent_image:["5",0]
-      }};
-    } else {
-      // SIN IP-Adapter — KSampler conectado directo al modelo base
-      wf["4"]={class_type:"KSampler",inputs:{
-        seed:seed,steps:adv.steps,cfg:adv.cfg,
-        sampler_name:adv.sampler,scheduler:adv.scheduler,denoise:1,
-        model:["1",0],positive:["2",0],negative:["3",0],latent_image:["5",0]
-      }};
-      // Remover nodos IP-Adapter del workflow
-      delete wf["11"];
-      delete wf["12"];
-      delete wf["13"];
-      delete wf["14"];
-    }
-    return wf;
   }
 
   // WORKFLOW ESTÁNDAR — otros canales
@@ -1263,4 +1285,3 @@ function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 </script>
 </body>
 </html>
-
