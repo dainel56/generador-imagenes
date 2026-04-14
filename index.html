@@ -702,7 +702,7 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
 var CHS = [
   {
     id:'bonny', name:'Bonny Finance', desc:'Finanzas · YouTube', tag:'YT', c:'#00d4aa', r:'16:9',
-    pfx:'2D flat vector illustration cel shading, always include detailed background environment and setting, teal #00d4aa and dark navy #0d1b2a color palette, young adult Latin American man late 20s short dark messy hair warm brown skin tone navy polo shirt slim athletic build mature face, NOT chibi NOT child NOT cartoon kids,'
+    pfx:'2D flat vector illustration, cel shading style, NOT photorealistic NOT photography NOT realistic, digital cartoon art, teal and dark navy color palette, always include detailed background and environment, young adult Latin American man late 20s short dark messy hair warm brown skin tone navy polo shirt slim athletic build mature face NOT chibi NOT child,'
   },
   {
     id:'enigma', name:'Enigma IA', desc:'Misterio · Facebook', tag:'FB', c:'#8b5cf6', r:'9:16',
@@ -965,8 +965,9 @@ function getDim(){
 function buildP(p){
   var cust=document.getElementById('custPfx').value.trim();
   var style=activeCh?activeCh.pfx:'';
-  // prompt del usuario va PRIMERO para que SDXL lo priorice
-  return [p,cust,style].filter(Boolean).join(', ');
+  // ESTILO PRIMERO — RealVis XL y SDXL priorizan lo que aparece primero
+  // El estilo del canal define el look antes de que el modelo lea la acción
+  return [style,cust,p].filter(Boolean).join(', ');
 }
 
 // ── COMFYUI GENERATION ────────────────────────────────────────────
@@ -1009,10 +1010,11 @@ function buildWorkflow(prompt,width,height){
   var neg='ugly, deformed, noisy, blurry, low quality, child, chibi, watermark, text, '+
     'duplicate, multiple people, cloned face, two characters, mirrored, '+
     'plain white background, plain background, isolated character, portrait only, '+
-    'cropped, out of frame, bad anatomy, extra limbs, mutation';
+    'cropped, out of frame, bad anatomy, extra limbs, mutation, '+
+    'photorealistic, photography, photo, realistic, hyperrealistic, 3d render';
 
   // NEGATIVO BONNY — agrega control extra de consistencia
-  var negBonny=neg+', beard, mustache, bald, glasses, hat, old man, woman, feminine';
+  var negBonny=neg+', beard, mustache, bald, glasses, hat, old man, woman, feminine, photorealistic, photography, photo, realistic skin, 3d render, hyperrealistic, cinematic photo';
 
   var ch=activeCh?activeCh.id:'';
 
@@ -1285,3 +1287,4 @@ function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 </script>
 </body>
 </html>
+
