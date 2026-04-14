@@ -408,6 +408,55 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
 .adv-input option{background:var(--bg2)}
 .adv-note{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);line-height:1.6;background:rgba(255,255,255,.02);border-radius:6px;padding:8px 11px;margin-top:4px}
 .adv-note b{color:var(--active-accent)}
+/* ── DEBUG MODAL ─────────────────────────────────────────────────── */
+#debugModal{
+  position:fixed;inset:0;background:rgba(0,0,0,.92);
+  backdrop-filter:blur(8px);z-index:998;
+  display:none;align-items:flex-start;justify-content:center;
+  padding:24px;overflow-y:auto;
+}
+#debugModal.op{display:flex}
+.debug-box{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:24px;
+  max-width:900px;width:100%;margin:auto;
+  position:relative;
+}
+.debug-title{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--active-accent);margin-bottom:16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.debug-close{
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--muted2);border-radius:6px;padding:4px 12px;
+  cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;
+  transition:all .15s;
+}
+.debug-close:hover{border-color:var(--active-accent);color:var(--active-accent)}
+.debug-section{margin-bottom:16px}
+.debug-label{
+  font-family:'JetBrains Mono',monospace;font-size:9px;
+  letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+  margin-bottom:6px;display:flex;align-items:center;gap:8px;
+}
+.debug-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.debug-code{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:7px;padding:12px 14px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:#a8d5cb;line-height:1.7;white-space:pre-wrap;
+  word-break:break-all;max-height:300px;overflow-y:auto;
+}
+.debug-copy{
+  margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:10px;
+  font-weight:600;padding:5px 12px;border-radius:6px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--muted2);cursor:pointer;transition:all .15s;
+}
+.debug-copy:hover{border-color:var(--active-accent);color:var(--active-accent)}
+
 /* ── SCROLLBAR ───────────────────────────────────────────────────── */
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
@@ -679,6 +728,7 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
   <div class="spc"></div>
   <div class="timer-final" id="timerFinal">⏱ Total: <span id="timerFinalVal">—</span></div>
   <button class="btn" id="btnZip" onclick="dlZip()" style="display:none">⬇ ZIP</button>
+  <button class="btn" onclick="showDebug()">🔍 Ver prompt</button>
   <button class="btn" onclick="clearAll()">⌫ Limpiar</button>
 </div>
 
@@ -689,6 +739,43 @@ input[type=range]{width:100%;accent-color:var(--active-accent);margin-bottom:3px
 </div>
 
 </div><!-- /wrap -->
+
+<!-- DEBUG MODAL -->
+<div id="debugModal">
+  <div class="debug-box">
+    <div class="debug-title">
+      🔍 Debug — Prompt y Workflow enviado a ComfyUI
+      <button class="debug-close" onclick="closeDebug()">✕ Cerrar</button>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-label">Canal activo</div>
+      <div class="debug-code" id="dbCanal">—</div>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-label">Prompt positivo (lo que recibe ComfyUI)</div>
+      <div class="debug-code" id="dbPrompt">—</div>
+      <button class="debug-copy" onclick="copyDebug('dbPrompt')">📋 Copiar prompt</button>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-label">Prompt negativo</div>
+      <div class="debug-code" id="dbNeg">—</div>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-label">Ajustes avanzados aplicados</div>
+      <div class="debug-code" id="dbAdv">—</div>
+    </div>
+
+    <div class="debug-section">
+      <div class="debug-label">Workflow JSON completo enviado a ComfyUI</div>
+      <div class="debug-code" id="dbWorkflow">—</div>
+      <button class="debug-copy" onclick="copyDebug('dbWorkflow')">📋 Copiar JSON</button>
+    </div>
+  </div>
+</div>
 
 <!-- LIGHTBOX -->
 <div id="lb">
@@ -1279,6 +1366,77 @@ function stopTimer(){
   document.getElementById('timerFinal').style.display='inline-flex';
 }
 
+// ── DEBUG ────────────────────────────────────────────────────────
+function showDebug(){
+  if(!activeCh){ alert('Selecciona un canal primero'); return; }
+  var prompts = getPrompts();
+  var testPrompt = prompts.length > 0 ? prompts[0] : '(sin prompt — escribe uno primero)';
+  var adv = getAdvSettings();
+  var ch = activeCh.id;
+  var dim = getDim();
+  var seed = 999999; // seed fija para debug
+
+  // Build the same prompt as genOneComfy
+  var fullPrompt = buildP(testPrompt);
+
+  // Build neg
+  var neg = 'ugly, deformed, noisy, blurry, low quality, child, chibi, watermark, text, ' +
+    'duplicate, multiple people, cloned face, two characters, mirrored, ' +
+    'plain white background, plain background, isolated character, portrait only, ' +
+    'cropped, out of frame, bad anatomy, extra limbs, mutation, ' +
+    'photorealistic, photography, photo, realistic, hyperrealistic, 3d render';
+  var negBonny = neg + ', beard, mustache, bald, glasses, hat, old man, woman, feminine, photorealistic, photography, photo, realistic skin, 3d render, hyperrealistic, cinematic photo';
+  var negUsed = ch === 'bonny' ? negBonny : neg;
+
+  // Build workflow
+  var wf = buildWorkflow(fullPrompt, dim.w, dim.h);
+  // Override seed for readability
+  if(wf["4"]) wf["4"].inputs.seed = seed;
+  if(wf["5"] && wf["5"].class_type === 'KSampler') wf["5"].inputs.seed = seed;
+
+  // Canal info
+  document.getElementById('dbCanal').textContent =
+    activeCh.name + ' · ' + activeCh.desc + '
+Ratio: ' + activeR + ' (' + dim.w + 'x' + dim.h + ')';
+
+  // Prompt
+  document.getElementById('dbPrompt').textContent = fullPrompt;
+
+  // Neg
+  document.getElementById('dbNeg').textContent = negUsed;
+
+  // Adv settings
+  document.getElementById('dbAdv').textContent =
+    'Modelo:   ' + adv.model + '
+' +
+    'Steps:    ' + adv.steps + '
+' +
+    'CFG:      ' + adv.cfg + '
+' +
+    'Sampler:  ' + adv.sampler + '
+' +
+    'Scheduler:' + adv.scheduler + '
+' +
+    (ch === 'bonny' ? 'IP-Adapter: ' + (getIPSettings().active ? 'ON · weight ' + getIPSettings().weight + ' · ref: ' + getIPSettings().ref : 'OFF') : 'IP-Adapter: N/A (solo Bonny)');
+
+  // Full workflow JSON
+  document.getElementById('dbWorkflow').textContent = JSON.stringify(wf, null, 2);
+
+  document.getElementById('debugModal').classList.add('op');
+}
+function closeDebug(){
+  document.getElementById('debugModal').classList.remove('op');
+}
+function copyDebug(id){
+  var txt = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(txt).then(function(){
+    alert('✓ Copiado al portapapeles');
+  });
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeDebug();
+});
+
 // ── UTILS ─────────────────────────────────────────────────────────
 function blobToB64(blob){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=rej;r.readAsDataURL(blob);});}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -1287,4 +1445,3 @@ function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 </script>
 </body>
 </html>
-
