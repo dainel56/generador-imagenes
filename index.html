@@ -927,11 +927,7 @@ function getIPSettings(){
     weight: active?(parseFloat(document.getElementById('ipWeight').value)||0.30):0
   };
 }
-function setIPW(v){
-  document.getElementById('ipWeight').value=v;
-  // highlight active button
-  document.querySelectorAll('.ipw-btn').forEach(function(b){b.classList.remove('active-ipw');});
-}
+
 function updateAdvLabel(){
   var m=document.getElementById('advModel').value||'modelo';
   var s=document.getElementById('advSteps').value||'30';
