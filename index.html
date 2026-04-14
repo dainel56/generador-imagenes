@@ -539,7 +539,8 @@ function buildP(p){
   return [style,cust,p].filter(Boolean).join(', ');
 }
 function getNeg(ch){
-  var base='ugly, deformed, noisy, blurry, low quality, child, chibi, watermark, text, duplicate, multiple people, cloned face, two characters, plain background, isolated character, portrait only, bad anatomy, extra limbs, photorealistic, photography, photo, realistic, hyperrealistic, 3d render';
+  // Negativo exacto del workflow ComfyUI — no modificar
+  var base='ugly, deformed, noisy, blurry, low quality, child, chibi, 3d render, photorealistic, watermark, text';
   return ch==='bonny'?base+', beard, mustache, bald, glasses, hat, old man, woman, feminine':base;
 }
 
