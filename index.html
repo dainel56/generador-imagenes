@@ -292,6 +292,16 @@ input[type=range]{accent-color:var(--active);margin-bottom:3px;padding:0}
       </select>
     </div>
   </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+    <div style="flex:1;min-width:120px">
+      <label>Seed (−1 = aleatoria)</label>
+      <input type="number" id="advSeed" value="-1" min="-1" max="999999999">
+    </div>
+    <div style="padding-top:18px">
+      <button class="btn" style="font-size:10px;padding:6px 12px" onclick="document.getElementById('advSeed').value=42">Seed 42</button>
+      <button class="btn" style="font-size:10px;padding:6px 12px;margin-left:4px" onclick="document.getElementById('advSeed').value=-1">Aleatoria</button>
+    </div>
+  </div>
   <div class="adv-note"><b>RealVis XL v5</b> steps 25-35 · cfg 5-7 · dpmpp_2m_sde · karras &nbsp;|&nbsp; <b>SDXL Base</b> steps 25-35 · cfg 7-8 · euler · karras &nbsp;|&nbsp; <b>Lightning</b> steps 6-8 · cfg 2 · dpmpp_sde</div>
   <div class="adv-sep"></div>
   <!-- IP-Adapter -->
@@ -378,7 +388,7 @@ input[type=range]{accent-color:var(--active);margin-bottom:3px;padding:0}
 <script>
 var CHS=[
   {id:'bonny',name:'Bonny Finance',desc:'Finanzas · YouTube',tag:'YT',c:'#00d4aa',r:'16:9',
-   pfx:'2D flat vector illustration, cel shading style, NOT photorealistic NOT photography NOT realistic, digital cartoon art, teal and dark navy color palette, always include detailed background and environment, young adult Latin American man late 20s short dark messy hair warm brown skin tone navy polo shirt slim athletic build mature face NOT chibi NOT child,'},
+   pfx:'young adult latin american man, short dark hair, navy polo shirt, flat design corporate illustration, teal navy color palette, professional financial content style,'},
   {id:'enigma',name:'Enigma IA',desc:'Misterio · Facebook',tag:'FB',c:'#8b5cf6',r:'9:16',
    pfx:'cinematic hyper-realistic photography, dark mysterious atmosphere, deep purple and gold tones, dramatic volumetric lighting, ancient historical relics and mysteries, dense fog atmosphere, ultra detailed 8k,'},
   {id:'conexion',name:'Conexión y Sabiduría',desc:'Espiritual · YouTube',tag:'YT',c:'#f59e0b',r:'16:9',
@@ -404,6 +414,15 @@ var COMFY='http://127.0.0.1:8188';
   document.getElementById('manP').addEventListener('input',updCnt);
   pickCh('bonny');
   setTimeout(checkComfy,600);
+  // Sync IP toggle UI to initial state
+  if(ipOn){
+    document.getElementById('ipTrack').style.background='var(--cfy)';
+    document.getElementById('ipThumb').style.left='21px';
+    document.getElementById('ipThumb').style.background='#fff';
+    document.getElementById('ipLbl').textContent='Activado';
+    document.getElementById('ipLbl').style.color='var(--cfy)';
+    document.getElementById('ipControls').style.display='block';
+  }
 })();
 
 function setMode(m){
@@ -504,7 +523,7 @@ function getAdv(){
   };
 }
 
-var ipOn=false;
+var ipOn=true; // ON por defecto — workflow original usa IP-Adapter
 function toggleIP(){
   ipOn=!ipOn;
   document.getElementById('ipTrack').style.background=ipOn?'var(--cfy)':'var(--border2)';
@@ -540,12 +559,14 @@ function buildP(p){
 }
 function getNeg(ch){
   // Negativo exacto del workflow ComfyUI — no modificar
+  // Negativo exacto del workflow original
   var base='ugly, deformed, noisy, blurry, low quality, child, chibi, 3d render, photorealistic, watermark, text';
-  return ch==='bonny'?base+', beard, mustache, bald, glasses, hat, old man, woman, feminine':base;
+  return base; // mismo negativo para todos los canales por defecto
 }
 
 function buildWF(prompt,width,height){
-  var seed=Math.floor(Math.random()*999999999);
+  var seedInput=parseInt(document.getElementById('advSeed').value);
+  var seed=seedInput>=0?seedInput:Math.floor(Math.random()*999999999);
   var adv=getAdv();
   var ch=CH?CH.id:'';
   var neg=getNeg(ch);
