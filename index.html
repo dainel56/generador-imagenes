@@ -213,7 +213,7 @@ input[type=range]{accent-color:var(--active);margin-bottom:3px;padding:0}
     <button class="cfg-btn" onclick="saveGemKey()">✓ Guardar</button>
   </div>
   <div class="cfg-st"><div class="dot" id="gem-dot"></div><span id="gem-msg">Ingresa tu API key para activar Gemini</span></div>
-  <div class="cfg-info">Modelo: <code>imagen-3.0-generate-002</code></div>
+  <div class="cfg-info">Modelo: <code>imagen-4.0-generate-001</code></div>
 </div>
 
 <div class="sec">02 — canal</div>
@@ -626,7 +626,7 @@ async function genGemini(userP){
   if(!gemKey)throw new Error('API key no configurada');
   var p=buildP(userP);
   var ar=AR==='16:9'?'16:9':AR==='9:16'?'9:16':AR==='4:3'?'4:3':AR==='3:4'?'3:4':'1:1';
-  var r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key='+gemKey,{
+  var r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key='+gemKey,{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({instances:[{prompt:p}],parameters:{sampleCount:1,aspectRatio:ar,safetyFilterLevel:'block_few'}})
   });
